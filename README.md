@@ -2,12 +2,25 @@ PredictionIO-Python-SDK
 =======================
 
 Install
-=============
+--------
 
-To install this predictionio package::
+To install this predictionio package, go to lib/ and run:
    
-   % python setup.py install
+	% python setup.py install
 
-To use predictionio in your python script::
+Usage
+-------------
+
+To use predictionio in your python script:
    
-   >>> import predictionio
+	>>> import predictionio
+
+
+predictionio Package Documentation
+----------------------------------
+
+The predictionio Python-SDK documentation can be generated. Go to docs/:
+
+	% make html
+	
+Then open the docs/build/html/index.html to view the documentation.
