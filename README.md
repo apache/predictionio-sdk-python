@@ -24,3 +24,11 @@ The predictionio Python-SDK documentation can be generated. Go to docs/:
 	% make html
 	
 Then open the docs/build/html/index.html to view the documentation.
+
+SUPPORT
+===========
+
+Forum
+-----
+
+https://groups.google.com/group/predictionio-user
