@@ -19,6 +19,12 @@ class TestPredictionIO(unittest.TestCase):
     def tearDown(self):
         pass
     
+    def test_status(self):
+        client = predictionio.Client(APP_KEY, 1, apiurl=API_URL)
+        status = client.get_status()
+        self.assertEqual(status, "PredictionIO Output API is online.")
+        client.close()
+        
     def test_user(self):
         client = predictionio.Client(APP_KEY, 1, apiurl=API_URL)
         

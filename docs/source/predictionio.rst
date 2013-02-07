@@ -135,6 +135,7 @@ predictionio.Client Class
    
    .. note:: The following is blocking (synchronous) request methods
    
+   .. automethod:: get_status
    .. automethod:: create_user
    .. automethod:: get_user
    .. automethod:: delete_user

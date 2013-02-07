@@ -28,6 +28,10 @@ from predictionio.connection import PredictionIOAPIError
 
 Should be handled by the user
 """
+class ServerStatusError(PredictionIOAPIError):
+    "Error happened when tried to get status of the API server"
+    pass
+
 class UserNotCreatedError(PredictionIOAPIError):
     "Error happened when tried to create user"
     pass
@@ -119,7 +123,34 @@ class Client:
         It will wait for all pending requests to finish.
         """
         self._connection.close()
-               
+        
+    def get_status(self):
+        """Get the status of the PredictionIO API Server
+                        
+        :returns:
+            status message.
+            
+        :raises:
+            ServerStatusError.
+        """
+        path = "/"
+        request = AsyncRequest("GET", path)
+        request.set_rfunc(self._aget_status_resp)
+        self._connection.make_request(request)
+        result = self.aresp(request)
+        return result
+    
+    def _aget_status_resp(self, response):
+        if response.error is not None:
+            raise ServerStatusError("Exception happened: %s for request %s" % \
+                                    (response.error, response.request))
+        elif response.status != httplib.OK:
+            raise ServerStatusError("request: %s status: %s body: %s" % \
+                                    (response.request, response.status, response.body))
+        
+        #data = json.loads(response.body) # convert json string to dict
+        return response.body
+    
     def acreate_user(self, uid, **params):
         """Asynchronously create a user.
         
