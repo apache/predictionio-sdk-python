@@ -527,7 +527,7 @@ class Client:
             AsyncRequest object. You should call the aresp() method using this AsyncRequest
             object as argument to get the final result or status of this asynchronous request.
         """
-        request = self._auser_action_item(action=LIKE_API, uid=uid, iid=iid, rate=rate, **params)
+        request = self._auser_action_item(action=RATE_API, uid=uid, iid=iid, rate=rate, **params)
         return request
     
     def auser_view_item(self, uid, iid, **params):
