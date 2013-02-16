@@ -19,7 +19,9 @@ To use predictionio in your python script:
 predictionio Package Documentation
 ----------------------------------
 
-The predictionio Python-SDK documentation can be generated. Go to docs/:
+Please install the Sphinx doc generator (htttp://sphinx-doc.org/install.html) if you don't have it.
+
+To generate the predictionio Python-SDK documentation, go to docs/:
 
 	% make html
 	
