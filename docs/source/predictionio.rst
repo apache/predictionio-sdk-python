@@ -41,7 +41,7 @@ Error Handling
 An exception will be raised when an error occur during the request. Please refer to the documentation of the :class:`predictionio.Client` class for details.
 In general, you may want to catch the exception and decide what to do with the error (such as logging it).
 
-For example, the method :meth:`~Client.user_rate_item` may raise U2IActionNotCreatedError.
+For example, the method :meth:`~Client.user_rate_item` may raise ``U2IActionNotCreatedError``.
 
    >>> try:
    >>>   client.user_rate_item(uid="100", iid="200", rate=2)

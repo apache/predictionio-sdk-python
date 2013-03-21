@@ -7,17 +7,31 @@ Overview
 Installation
 ------------
 
-Go to the containing directory PredictionIO-Python-SDK/lib and execute the following::
+To install the module from PyPI, you may
 
-   $ python setup.py install
+::
 
-This will install the predictionio Python-SDK package into the corresponding package directory.
+    $ pip install predictionio
+
+or
+
+::
+
+    $ easy_install predictionio
+
+If you have cloned the repository and want to install directly from there,
+do the following in the root directory of the repository::
+
+    $ python setup.py install
+
+This will install the ``predictionio`` module to your Python distribution.
 
 
 Usage
--------------
+-----
 
-To start using this Python SDK, simply import the installed predictionio package in your Python environment::
+To start using this Python SDK, simply import the ``predictionio`` module in
+your Python program::
 
     >>> import predictionio
 
