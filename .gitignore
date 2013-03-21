@@ -2,7 +2,7 @@
 .project
 .pydevproject
 .settings
-lib/build/
-lib/dist/
-lib/MANIFEST
+build/
+dist/
+MANIFEST
 docs/build/
