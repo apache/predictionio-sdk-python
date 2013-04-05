@@ -3,9 +3,7 @@ from appdata import AppData
 import predictionio
 import sys
 
-APP_KEY = 'xRlkTabIPADP5VYj3FrSCrAlTl1z4GGSpTOihgFRF6fDKskAhD0X6hLkp0sy6xv9'
-API_URL = 'http://localhost:8000'
-
+from app_config import APP_KEY, API_URL
 
 def batch_import_task(app_data, client, all_info=False):
 

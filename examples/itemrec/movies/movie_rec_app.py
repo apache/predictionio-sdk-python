@@ -3,9 +3,7 @@ from appdata import AppData
 import predictionio
 import sys
 
-APP_KEY = 'LVPjxLUa77PCDHeSJ3urYO5zrOrmXlgqPVLG9UuTEHNYTIX6HG9th1PgYficO2AB'
-API_URL = 'http://localhost:8000'
-ENGINE_NAME = 'movie-rec'
+from app_config import APP_KEY, API_URL, ENGINE_NAME
 
 class App:
 
