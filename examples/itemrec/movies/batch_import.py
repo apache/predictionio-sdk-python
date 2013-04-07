@@ -36,7 +36,7 @@ def batch_import_task(app_data, client, all_info=False):
 
 		client.create_item(v.iid, ("movie",))
 	
-	sys.stdout.write('\r[Info] %s users were imported.\n' % count)
+	sys.stdout.write('\r[Info] %s items were imported.\n' % count)
 	sys.stdout.flush()
 
 	print "[Info] Importing rate actions to PredictionIO..."
@@ -52,7 +52,7 @@ def batch_import_task(app_data, client, all_info=False):
 
 		client.user_rate_item(v.uid, v.iid, v.rating, t=v.t)
 
-	sys.stdout.write('\r[Info] %s users were imported.\n' % count)
+	sys.stdout.write('\r[Info] %s rate actions were imported.\n' % count)
 	sys.stdout.flush()
 
 

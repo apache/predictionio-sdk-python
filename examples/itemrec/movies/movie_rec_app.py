@@ -3,7 +3,9 @@ from appdata import AppData
 import predictionio
 import sys
 
-from app_config import APP_KEY, API_URL, ENGINE_NAME
+from app_config import APP_KEY, API_URL
+
+ENGINE_NAME = 'movie-rec'
 
 class App:
 

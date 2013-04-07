@@ -1,4 +1,4 @@
 
-APP_KEY = '2evHm5d4vqiY6bttb9Zlhd7vBYNL0P51zVyYJYS5WQeGaGz3CgOz9tLoZdIvjPqS'
+APP_KEY = 'wWKeyokhpwEgis9BHCHkwqB7Hcop0OEF6KzkZWXfz2uMJYjl2QDwNlFVGl5hhHfy'
 API_URL = 'http://localhost:8000'
-ENGINE_NAME = 'movie-rec'
+
