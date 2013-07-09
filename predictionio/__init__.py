@@ -9,7 +9,7 @@ __email__ = "help@tappingstone.com"
 __copyright__ = "Copyright 2013, TappingStone, Inc."
 __license__ = "Apache License, Version 2.0"
 
-__version__ = "0.3"
+__version__ = "0.4.3"
 
 
 # import packages
@@ -67,7 +67,6 @@ class InvalidArgumentError(PredictionIOAPIError):
     "Arguments are not valid"
     pass
 
-
 # map to API
 LIKE_API = "like"
 DISLIKE_API = "dislike"
@@ -113,6 +112,7 @@ class Client:
                 raise InvalidArgumentError("apiurl is not valid: %s" % apiurl)
         self.host = m.group(1)
 
+        self._uid = None # identified uid
         self._connection = Connection(host=self.host, threads=self.threads, https=self.https)
 
     def close(self):
@@ -122,6 +122,13 @@ class Client:
         It will wait for all pending requests to finish.
         """
         self._connection.close()
+
+    def identify(self, uid):
+        """Identify the uid performing the actions
+
+        :param uid: user id. type str.
+        """
+        self._uid = uid
 
     def get_status(self):
         """Get the status of the PredictionIO API Server
@@ -140,6 +147,7 @@ class Client:
         return result
 
     def _aget_status_resp(self, response):
+        """Handle the AsyncResponse of get status request"""
         if response.error is not None:
             raise ServerStatusError("Exception happened: %s for request %s" % \
                                     (response.error, response.request))
@@ -150,20 +158,26 @@ class Client:
         #data = json.loads(response.body) # convert json string to dict
         return response.body
 
-    def acreate_user(self, uid, **params):
+    def acreate_user(self, uid, params={}):
         """Asynchronously create a user.
 
-        :param uid: user id. type str or int.
-        :param params: keyword arguments for optional attributes.
-                For example, bday="1985-01-23", inactive="true".
-
+        :param uid: user id. type str.
+        :param params: optional attributes. type dictionary.
+                For example, { 'custom': 'value', 'pio_inactive' : True, 'pio_latlng': [4.5,67.8] }
+                
         :returns:
             AsyncRequest object. You should call the aresp() method using this AsyncRequest
             object as argument to get the final result or status of this asynchronous request.
 
         """
+        
+        if "pio_latlng" in params:
+            params["pio_latlng"] = ",".join(map(str, params["pio_latlng"]))
+        if "pio_inactive" in params:
+            params["pio_inactive"] = str(params["pio_inactive"]).lower()
+
         path = "%s/users.json" % self.apiversion
-        request = AsyncRequest("POST", path, appkey=self.appkey, uid=uid, **params)
+        request = AsyncRequest("POST", path, pio_appkey=self.appkey, pio_uid=uid, **params)
         request.set_rfunc(self._acreate_user_resp)
         self._connection.make_request(request)
 
@@ -193,18 +207,16 @@ class Client:
     def aget_user(self, uid):
         """Asynchronously get user.
 
-        :param uid: user id. type str or int.
+        :param uid: user id. type str.
 
         :returns:
             AsyncRequest object. You should call the aresp() method using this AsyncRequest
             object as argument to get the final result or status of this asynchronous request.
         """
-        if type(uid) is int:
-            enc_uid = uid
-        else:
-            enc_uid = urllib.quote(uid,"") # replace special char with %xx
+        
+        enc_uid = urllib.quote(uid,"") # replace special char with %xx
         path = "%s/users/%s.json" % (self.apiversion, enc_uid)
-        request = AsyncRequest("GET", path, appkey=self.appkey)
+        request = AsyncRequest("GET", path, pio_appkey=self.appkey)
         request.set_rfunc(self._aget_user_resp)
         self._connection.make_request(request)
 
@@ -235,18 +247,16 @@ class Client:
     def adelete_user(self, uid):
         """Asynchronously delete user.
 
-        :param uid: user id. type str or int.
+        :param uid: user id. type str.
 
         :returns:
             AsyncRequest object. You should call the aresp() method using this AsyncRequest
             object as argument to get the final result or status of this asynchronous request.
         """
-        if type(uid) is int:
-            enc_uid = uid
-        else:
-            enc_uid = urllib.quote(uid,"") # replace special char with %xx
+        
+        enc_uid = urllib.quote(uid,"") # replace special char with %xx
         path = "%s/users/%s.json" % (self.apiversion, enc_uid)
-        request = AsyncRequest("DELETE", path, appkey=self.appkey)
+        request = AsyncRequest("DELETE", path, pio_appkey=self.appkey)
         request.set_rfunc(self._adelete_user_resp)
         self._connection.make_request(request)
 
@@ -272,23 +282,29 @@ class Client:
                                       (response.request, response.status, response.body))
         return None
 
-    def acreate_item(self, iid, itypes, **params):
+    def acreate_item(self, iid, itypes, params={}):
         """Asynchronously create item.
 
-        :param iid: item id. type str or int.
+        :param iid: item id. type str.
         :param itypes: item types. Tuple of Str.
                 For example, if this item belongs to item types "t1", "t2", "t3", "t4",
                 then itypes=("t1", "t2", "t3", "t4").
                 NOTE: if this item belongs to only one itype, use tuple of one element, eg. itypes=("t1",)
-        :param params: keyword arguments for optional attributes.
-                For example, latlng="123.4, 56.7".
+        :param params: optional attributes. type dictionary.
+                For example, { 'custom': 'value', 'pio_inactive' : True, 'pio_latlng': [4.5,67.8] }
         :returns:
             AsyncRequest object. You should call the aresp() method using this AsyncRequest
             object as argument to get the final result or status of this asynchronous request.
         """
-        itypes_str = ",".join(map(str, itypes)) # convert to string and join items with ","
+        itypes_str = ",".join(itypes) # join items with ","
+
+        if "pio_latlng" in params:
+            params["pio_latlng"] = ",".join(map(str, params["pio_latlng"]))
+        if "pio_inactive" in params:
+            params["pio_inactive"] = str(params["pio_inactive"]).lower()
+
         path = "%s/items.json" % self.apiversion
-        request = AsyncRequest("POST", path, appkey=self.appkey, iid=iid, itypes=itypes_str, **params)
+        request = AsyncRequest("POST", path, pio_appkey=self.appkey, pio_iid=iid, pio_itypes=itypes_str, **params)
         request.set_rfunc(self._acreate_item_resp)
         self._connection.make_request(request)
         return request
@@ -315,18 +331,15 @@ class Client:
     def aget_item(self, iid):
         """Asynchronously get item
 
-        :param iid: item id. type str or int.
+        :param iid: item id. type str.
 
         :returns:
             AsyncRequest object. You should call the aresp() method using this AsyncRequest
             object as argument to get the final result or status of this asynchronous request.
         """
-        if type(iid) is int:
-            enc_iid = iid
-        else:
-            enc_iid = urllib.quote(iid, "")
+        enc_iid = urllib.quote(iid, "")
         path = "%s/items/%s.json" % (self.apiversion, enc_iid)
-        request = AsyncRequest("GET", path, appkey=self.appkey)
+        request = AsyncRequest("GET", path, pio_appkey=self.appkey)
         request.set_rfunc(self._aget_item_resp)
         self._connection.make_request(request)
         return request
@@ -351,23 +364,24 @@ class Client:
                                     (response.request, response.status, response.body))
 
         data = json.loads(response.body) # convert json string to dict
+        if "pio_itypes" in data:
+            data["pio_itypes"] = tuple(data["pio_itypes"]) # convert from list to tuple
+
         return data
 
     def adelete_item(self, iid):
         """Asynchronously delete item
 
-        :param iid: item id. type str or int.
+        :param iid: item id. type str.
 
         :returns:
             AsyncRequest object. You should call the aresp() method using this AsyncRequest
             object as argument to get the final result or status of this asynchronous request.
         """
-        if type(iid) is int:
-            enc_iid = iid
-        else:
-            enc_iid = urllib.quote(iid, "")
+        
+        enc_iid = urllib.quote(iid, "")
         path = "%s/items/%s.json" % (self.apiversion, enc_iid)
-        request = AsyncRequest("DELETE", path, appkey=self.appkey)
+        request = AsyncRequest("DELETE", path, pio_appkey=self.appkey)
         request.set_rfunc(self._adelete_item_resp)
         self._connection.make_request(request)
         return request
@@ -391,29 +405,33 @@ class Client:
                                       (response.request, response.status, response.body))
         return None
 
-    def aget_itemrec(self, uid, n, engine, **params):
-        """Asynchronously get recommendations
+    def _aget_user_itemrec_topn(self, uid, n, engine, params={}):
+        """Private function to asynchronously get recommendations for user
 
-        :param uid: user id. type str or int.
+        :param uid: user id. type str.
         :param n: number of recommendation. type int.
         :param engine: name of the prediction engine. type str.
-        :param params: keyword arguments for optional attributes.
-                For example, latlng="123.4, 56.7"
+        :param params: optional parameters. type dictionary
+                For example, { 'pio_itypes' : ("t1","t2") }
         :returns:
             AsyncRequest object. You should call the aresp() method using this AsyncRequest
             object as argument to get the final result or status of this asynchronous request.
         """
-        if type(uid) is int:
-            enc_uid = uid
-        else:
-            enc_uid = urllib.quote(uid,"") # replace special char with %xx
+        if "pio_itypes" in params:
+            params["pio_itypes"] = ",".join(params["pio_itypes"])
+        if "pio_latlng" in params:
+            params["pio_latlng"] = ",".join(map(str, params["pio_latlng"]))
+        if "pio_attributes" in params:
+            params["pio_attributes"] = ",".join(params["pio_attributes"])
+
+        enc_uid = urllib.quote(uid,"") # replace special char with %xx
         path = "%s/engines/itemrec/%s/topn.json" % (self.apiversion, engine)
-        request = AsyncRequest("GET", path, appkey=self.appkey, uid=enc_uid, n=n, **params)
-        request.set_rfunc(self._aget_itemrec_resp)
+        request = AsyncRequest("GET", path, pio_appkey=self.appkey, pio_uid=enc_uid, pio_n=n, **params)
+        request.set_rfunc(self._aget_user_itemrec_topn_resp)
         self._connection.make_request(request)
         return request
 
-    def _aget_itemrec_resp(self, response):
+    def _aget_user_itemrec_topn_resp(self, response):
         """Private function to handle the AsyncResponse of the aget_itemrec request
 
         :param response: AsyncResponse object
@@ -434,27 +452,64 @@ class Client:
         data = json.loads(response.body) # convert json string to dict
         return data
 
-    def _auser_action_item(self, action, uid, iid, **params):
-        """Asynchronously create an user action on an item
+    def aget_itemrec_topn(self, n, engine, params={}):
+        """Asynchronously get recommendations for the identified user
 
-        :param action: action type. type str. ("like", "dislike", "conversion", "rate", "view")
-        :param uid: user id. type str or int.
-        :param iid: item id. type str or int.
-        :param params: keyword arguments for optional attributes.
-                For example, latlng="123.4, 56.7"
-                For "rate" action, rate param is required. integer value of 1-5 (1 is least preferred and 5 is most preferred) (eg. rate=4)
+        :param n: number of recommendation. type int.
+        :param engine: name of the prediction engine. type str.
+        :param params: optional parameters. type dictionary
+                For example, { 'pio_itypes' : ("t1",) }
         :returns:
             AsyncRequest object. You should call the aresp() method using this AsyncRequest
             object as argument to get the final result or status of this asynchronous request.
         """
-        path = "%s/actions/u2i/%s.json" % (self.apiversion, action)
-        request = AsyncRequest("POST", path, appkey=self.appkey, uid=uid, iid=iid, **params)
-        request.set_rfunc(self._au2i_action_resp)
+
+        if self._uid is None:
+            raise InvalidArgumentError("uid is not identified. Please call identify(uid) first.")
+
+        request = self._aget_user_itemrec_topn(self._uid, n, engine, params)
+        return request
+
+    def aget_itemrec(self, uid, n, engine, **params):
+        """Deprecated. Asynchronously get recommendations
+
+        :param uid: user id. type str.
+        :param n: number of recommendation. type int.
+        :param engine: name of the prediction engine. type str.
+        :param params: keyword arguments for optional attributes.
+                For example, pio_latlng="123.4, 56.7"
+        :returns:
+            AsyncRequest object. You should call the aresp() method using this AsyncRequest
+            object as argument to get the final result or status of this asynchronous request.
+        """
+        request = self._aget_user_itemrec_topn(uid, n, engine, params)
+        return request
+
+    def _auser_action_on_item(self, action, uid, iid, params):
+        """Private function to asynchronously create an user action on an item
+
+        :param action: action type. type str. ("like", "dislike", "conversion", "rate", "view")
+        :param uid: user id. type str or int.
+        :param iid: item id. type str or int.
+        :param params: optional attributes. type dictionary.
+                For example, { 'pio_rate' : 4, 'pio_latlng' : [1.23,4.56] }
+                NOTE: For "rate" action, pio_rate attribute is required. integer value of 1-5 (1 is least preferred and 5 is most preferred)
+
+        :returns:
+            AsyncRequest object. You should call the aresp() method using this AsyncRequest
+            object as argument to get the final result or status of this asynchronous request.
+        """
+        if "pio_latlng" in params:
+            params["pio_latlng"] = ",".join(map(str, params["pio_latlng"]))
+
+        path = "%s/actions/u2i.json" % (self.apiversion)
+        request = AsyncRequest("POST", path, pio_appkey=self.appkey, pio_action=action, pio_uid=uid, pio_iid=iid, **params)
+        request.set_rfunc(self._auser_action_on_item_resp)
         self._connection.make_request(request)
         return request
 
-    def _au2i_action_resp(self, response):
-        """Private function to handle the AsyncResponse of the auser_ACTION_item request
+    def _auser_action_on_item_resp(self, response):
+        """Private function to handle the AsyncResponse of the _auser_action_on_item request
 
         :param response: AsyncResponse object
 
@@ -472,75 +527,100 @@ class Client:
                                            (response.request, response.status, response.body))
         return None
 
-    def auser_conversion_item(self, uid, iid, **params):
-        """Asynchronously create an user conversion action on an item
+    def arecord_action_on_item(self, action, iid, params={}):
+        """Asynchronously create action on item
 
-        :param uid: user id. type str or int.
+        :param action: action name. type String. For example, "rate", "like", etc
         :param iid: item id. type str or int.
+        :param params: optional attributes. type dictionary.
+                For example, { 'pio_rate' : 4, 'pio_latlng': [4.5,67.8] }
+                NOTE: For "rate" action, pio_rate attribute is required. integer value of 1-5 (1 is least preferred and 5 is most preferred)
+        
+        :returns:
+            AsyncRequest object. You should call the aresp() method using this AsyncRequest
+            object as argument to get the final result or status of this asynchronous request.
+
+        :raises:
+            U2IActionNotCreatedError
+        """
+
+        if self._uid is None:
+            raise InvalidArgumentError("uid is not identified. Please call identify(uid) first.")
+
+        request = self._auser_action_on_item(action, self._uid, iid, params)
+        return request
+
+    def auser_conversion_item(self, uid, iid, **params):
+        """Deprecated. Asynchronously create an user conversion action on an item
+
+        :param uid: user id. type str.
+        :param iid: item id. type str.
         :param params: keyword arguments for optional attributes.
-                For example, latlng="123.4, 56.7"
+                For example, pio_latlng=[123.4, 56.7]
         :returns:
             AsyncRequest object. You should call the aresp() method using this AsyncRequest
             object as argument to get the final result or status of this asynchronous request.
         """
-        request = self._auser_action_item(action=CONVERSION_API, uid=uid, iid=iid, **params)
+        request = self._auser_action_on_item(CONVERSION_API, uid, iid, params)
         return request
 
     def auser_dislike_item(self, uid, iid, **params):
-        """Asynchronously create an user dislike action on an item
+        """Deprecated. Asynchronously create an user dislike action on an item
 
-        :param uid: user id. type str or int.
-        :param iid: item id. type str or int.
+        :param uid: user id. type str.
+        :param iid: item id. type str.
         :param params: keyword arguments for optional attributes.
-                For example, latlng="123.4, 56.7"
+                For example, pio_latlng=[123.4, 56.7]
         :returns:
             AsyncRequest object. You should call the aresp() method using this AsyncRequest
             object as argument to get the final result or status of this asynchronous request.
         """
-        request = self._auser_action_item(action=DISLIKE_API, uid=uid, iid=iid, **params)
+        request = self._auser_action_on_item(DISLIKE_API, uid, iid, params)
         return request
 
     def auser_like_item(self, uid, iid, **params):
-        """Asynchronously create an user like action on an item
+        """Deprecated. Asynchronously create an user like action on an item
 
-        :param uid: user id. type str or int.
-        :param iid: item id. type str or int.
+        :param uid: user id. type str.
+        :param iid: item id. type str.
         :param params: keyword arguments for optional attributes.
-                For example, latlng="123.4, 56.7"
+                For example, pio_latlng=[123.4, 56.7]
         :returns:
             AsyncRequest object. You should call the aresp() method using this AsyncRequest
             object as argument to get the final result or status of this asynchronous request.
         """
-        request = self._auser_action_item(action=LIKE_API, uid=uid, iid=iid, **params)
+        request = self._auser_action_on_item(LIKE_API, uid, iid, params)
         return request
 
     def auser_rate_item(self, uid, iid, rate, **params):
-        """Asynchronously create an user rate action on an item
+        """Deprecated. Asynchronously create an user rate action on an item
 
-        :param uid: user id. type str or int.
-        :param iid: item id. type str or int.
+        :param uid: user id. type str.
+        :param iid: item id. type str.
         :param rate: rating. integer value of 1-5 (1 is least preferred and 5 is most preferred)
         :param params: keyword arguments for optional attributes.
-                For example, latlng="123.4, 56.7"
+                For example, pio_latlng=[123.4, 56.7]
         :returns:
             AsyncRequest object. You should call the aresp() method using this AsyncRequest
             object as argument to get the final result or status of this asynchronous request.
         """
-        request = self._auser_action_item(action=RATE_API, uid=uid, iid=iid, rate=rate, **params)
+
+        params['pio_rate'] = rate
+        request = self._auser_action_on_item(RATE_API, uid, iid, params)
         return request
 
     def auser_view_item(self, uid, iid, **params):
-        """Asynchronously create an user view action on an item
+        """Deprecated. Asynchronously create an user view action on an item
 
-        :param uid: user id. type str or int.
-        :param iid: item id. type str or int.
+        :param uid: user id. type str.
+        :param iid: item id. type str.
         :param params: keyword arguments for optional attributes.
-                For example, latlng="123.4, 56.7"
+                For example, pio_latlng=[123.4, 56.7]
         :returns:
             AsyncRequest object. You should call the aresp() method using this AsyncRequest
             object as argument to get the final result or status of this asynchronous request.
         """
-        request = self._auser_action_item(action=VIEW_API, uid=uid, iid=iid, **params)
+        request = self._auser_action_on_item(VIEW_API, uid, iid, params)
         return request
 
     def aresp(self, request):
@@ -574,13 +654,12 @@ class Client:
         result = request.rfunc(response)
         return result
 
-
-    def create_user(self, uid, **params):
+    def create_user(self, uid, params={}):
         """Blocking request to create user
 
-        :param uid: user id. type str or int.
-        :param params: keyword arguments for optional attributes.
-                For example, bday="1985-01-23", inactive="true".
+        :param uid: user id. type str.
+        :param params: optional attributes. type dictionary.
+                For example, { 'custom': 'value', 'pio_inactive' : True, 'pio_latlng': [4.5,67.8] }
 
         :returns:
             None.
@@ -589,7 +668,7 @@ class Client:
             UserNotCreatedError.
 
         """
-        request = self.acreate_user(uid, **params)
+        request = self.acreate_user(uid, params)
         result = self.aresp(request)
         return result
 
@@ -612,7 +691,7 @@ class Client:
     def delete_user(self, uid):
         """Blocking request to delete the user
 
-        :param uid: user id. type str or int.
+        :param uid: user id. type str.
 
         :returns:
             None.
@@ -625,16 +704,16 @@ class Client:
         result = self.aresp(request)
         return result
 
-    def create_item(self, iid, itypes, **params):
+    def create_item(self, iid, itypes, params={}):
         """Blocking request to create item
 
-        :param iid: item id. type str or int.
+        :param iid: item id. type str.
         :param itypes: item types. Tuple of Str.
                 For example, if this item belongs to item types "t1", "t2", "t3", "t4",
                 then itypes=("t1", "t2", "t3", "t4").
                 NOTE: if this item belongs to only one itype, use tuple of one element, eg. itypes=("t1",)
-        :param params: keyword arguments for optional attributes.
-                For example, latlng="123.4, 56.7".
+        :param params: optional attributes. type dictionary.
+                For example, { 'custom': 'value', 'pio_inactive' : True, 'pio_latlng': [4.5,67.8] }
 
         :returns:
             None
@@ -643,14 +722,14 @@ class Client:
             ItemNotCreatedError
 
         """
-        request = self.acreate_item(iid, itypes, **params)
+        request = self.acreate_item(iid, itypes, params)
         result = self.aresp(request)
         return result
 
     def get_item(self, iid):
         """Blocking request to get item
 
-        :param iid: item id. type str or int.
+        :param iid: item id. type str.
 
         :returns:
             item data in dictionary format.
@@ -666,7 +745,7 @@ class Client:
     def delete_item(self, iid):
         """Blocking request to delete item
 
-        :param iid: item id. type str or int.
+        :param iid: item id. type str.
 
         :returns:
             None
@@ -679,14 +758,31 @@ class Client:
         result = self.aresp(request)
         return result
 
+    def get_itemrec_topn(self, n, engine, params={}):
+        """Blocking request to get recommendations for the identified user
+
+        :param n: number of recommendation. type int.
+        :param engine: name of the prediction engine. type str.
+        :param params: optional parameters. type dictionary
+                For example, { 'pio_itypes' : ("t1", "t2") }
+        :returns:
+            data in dictionary format.
+
+        :raises:
+            ItemRecNotFoundError.
+        """
+        request = self.aget_itemrec_topn(n, engine, params)
+        result = self.aresp(request)
+        return result
+
     def get_itemrec(self, uid, n, engine, **params):
-        """Blocking request to get recommendations
+        """Deprecated. Blocking request to get recommendations
 
         :param uid: user id. type str or int.
         :param n: number of recommendation. type int.
         :param engine: name of the prediction engine. type str.
         :param params: keyword arguments for optional attributes.
-                For example, latlng="123.4, 56.7"
+                For example, pio_latlng=[123.4, 56.7]
 
         :returns:
             data in dictionary format.
@@ -695,36 +791,36 @@ class Client:
             ItemRecNotFoundError.
 
         """
-        request = self.aget_itemrec(uid, n, engine=engine, **params)
+        request = self.aget_itemrec(uid, n, engine, **params)
         result = self.aresp(request)
         return result
 
-    def _user_action_item(self, action, uid, iid, **params):
-        """Blocking request to create user action on an item
+    def record_action_on_item(self, action, iid, params={}):
+        """Blocking request to create action on an item
 
-        :param action: action type. type str. ("like", "dislike", "conversion", "rate", "view")
-        :param uid: user id. type str or int.
-        :param iid: item id. type str or int.
-        :param params: keyword arguments for optional attributes.
-                For example, latlng="123.4, 56.7"
-                For "rate" action, rate param is required. integer value of 1-5 (1 is least preferred and 5 is most preferred) (eg. rate=4)
+        :param action: action name. type String. For example, "rate", "like", etc
+        :param iid: item id. type str.
+        :param params: optional attributes. type dictionary.
+                For example, { 'pio_rate' : 4, 'pio_latlng' : [1.23,4.56] }
+                NOTE: For "rate" action, pio_rate attribute is required. integer value of 1-5 (1 is least preferred and 5 is most preferred)
+
         :returns:
             None
 
         :raises:
             U2IActionNotCreatedError
         """
-        request = self._auser_action_item(action, uid, iid, **params)
+        request = self.arecord_action_on_item(action, iid, params)
         result = self.aresp(request)
         return result
 
     def user_conversion_item(self, uid, iid, **params):
-        """Blocking request to create user conversion action on an item
+        """Deprecated. Blocking request to create user conversion action on an item
 
-        :param uid: user id. type str or int.
-        :param iid: item id. type str or int.
+        :param uid: user id. type str.
+        :param iid: item id. type str.
         :param params: keyword arguments for optional attributes.
-                For example, latlng="123.4, 56.7"
+                For example, pio_latlng=[123.4, 56.7]
 
         :returns:
             None
@@ -732,16 +828,17 @@ class Client:
         :raises:
             U2IActionNotCreatedError
         """
-        result = self._user_action_item(action=CONVERSION_API, uid=uid, iid=iid, **params)
+        request = self.auser_conversion_item(uid, iid, **params)
+        result = self.aresp(request)
         return result
 
     def user_dislike_item(self, uid, iid, **params):
-        """Blocking request to create user dislike action on an item
+        """Deprecated. Blocking request to create user dislike action on an item
 
-        :param uid: user id. type str or int.
-        :param iid: item id. type str or int.
+        :param uid: user id. type str.
+        :param iid: item id. type str.
         :param params: keyword arguments for optional attributes.
-                For example, latlng="123.4, 56.7"
+                For example, pio_latlng=[123.4, 56.7]
 
         :returns:
             None
@@ -749,16 +846,17 @@ class Client:
         :raises:
             U2IActionNotCreatedError
         """
-        result = self._user_action_item(action=DISLIKE_API, uid=uid, iid=iid, **params)
+        request = self.auser_dislike_item(uid, iid, **params)
+        result = self.aresp(request)
         return result
 
     def user_like_item(self, uid, iid, **params):
-        """Blocking request to create user like action on an item
+        """Deprecated. Blocking request to create user like action on an item
 
-        :param uid: user id. type str or int.
-        :param iid: item id. type str or int.
+        :param uid: user id. type str.
+        :param iid: item id. type str.
         :param params: keyword arguments for optional attributes.
-                For example, latlng="123.4, 56.7"
+                For example, pio_latlng=[123.4, 56.7]
 
         :returns:
             None
@@ -766,17 +864,18 @@ class Client:
         :raises:
             U2IActionNotCreatedError
         """
-        result = self._user_action_item(action=LIKE_API, uid=uid, iid=iid, **params)
+        request = self.auser_like_item(uid, iid, **params)
+        result = self.aresp(request)
         return result
 
     def user_rate_item(self, uid, iid, rate, **params):
-        """Blocking request to create user rate action on an item
+        """Deprecated. Blocking request to create user rate action on an item
 
-        :param uid: user id. type str or int.
-        :param iid: item id. type str or int.
+        :param uid: user id. type str.
+        :param iid: item id. type str.
         :param rate: rating. integer value of 1-5 (1 is least preferred and 5 is most preferred)
         :param params: keyword arguments for optional attributes.
-                For example, latlng="123.4, 56.7"
+                For example, pio_latlng=[123.4, 56.7]
 
         :returns:
             None
@@ -784,16 +883,17 @@ class Client:
         :raises:
             U2IActionNotCreatedError
         """
-        result = self._user_action_item(action=RATE_API, uid=uid, iid=iid, rate=rate, **params)
+        request = self.auser_rate_item(uid, iid, rate, **params)
+        result = self.aresp(request)
         return result
 
     def user_view_item(self, uid, iid, **params):
-        """Blocking request to create user view action on an item
+        """Deprecated. Blocking request to create user view action on an item
 
-        :param uid: user id. type str or int.
-        :param iid: item id. type str or int.
+        :param uid: user id. type str.
+        :param iid: item id. type str.
         :param params: keyword arguments for optional attributes.
-                For example, latlng="123.4, 56.7"
+                For example, pio_latlng=[123.4, 56.7]
 
         :returns:
             None
@@ -801,5 +901,6 @@ class Client:
         :raises:
             U2IActionNotCreatedError
         """
-        result = self._user_action_item(action=VIEW_API, uid=uid, iid=iid, **params)
+        request = self.auser_view_item(uid, iid, **params)
+        result = self.aresp(request)
         return result
