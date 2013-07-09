@@ -8,31 +8,72 @@ predictionio.Client Usage Overview
 
 Before making any request through the PredictionIO API, you need to create a client object for your App.
 
-    >>> client = predictionio.Client(appkey=<your App Key>)
+    >>> client = predictionio.Client(<your App Key>)
 
 .. note:: The App Key can be found in the PredictionIO Admin Server web control panel.
 
 Afterwards, you can import data or retrieve recommendations for your App by calling methods of this object. For example,
 
-**To import a user record from you App with user id = 100**
+**User**
 
-    >>> client.create_user(uid="100")
+  To import a user record from you App with user id = "u100":
 
-**To import an item record from your App with item id = 200 and item type = 3**
+    >>> client.create_user("u100")
 
-    >>> client.create_item(iid="200", itypes=("3",))
+  To import a user record with the optional predefined location attribute "pio_latlng":
 
-**To import a user "rate" action record from your App with user id = 100, item id = 200 and rating = 2**
+    >>> client.create_user("u100", { "pio_latlng" : [1.23, 4.56] })
 
-    >>> client.user_rate_item(uid="100", iid="200", rate=2)
+  You may also define your own custom attribute "custom" = "value":
 
-When there is enough data imported from your App and the prediction results are ready, you can get recommendations for a user.
+    >>> client.create_user("u100", { "pio_latlng" : [1.23, 4.56], "custom": "value" })
 
-**To get top 5 item recommendation for your App user with user id = 100**
+  .. note:: custom attributes and values could be any string but all attribute names with prefix "pio_" are reserved. You should not use the prefix "pio_" when define your custom attributes to avoid conflicts.
 
-    >>> result = client.get_itemrec(uid="100", n=5, engine="engine-1")
+**Item**
 
-The above is just a simple example, please refer to the documentation of the :class:`predictionio.Client` class for more details of all available methods.
+  To import an item record from your App with item id = "i200" and item type = "type3":
+
+    >>> client.create_item("i200", ("type3",))
+
+  To import an item record with the predefined optional attribute "pio_latlng":
+
+    >>> client.create_user("i200", ("type3",), { "pio_latlng" : [1.23, 4.56] })
+
+  You may also define your own custom attribute "custom" = "value":
+
+    >>> client.create_user("i200", ("type3",), { "pio_latlng" : [1.23, 4.56], "custom": "value" })
+
+  .. note:: custom attributes and values could be any string but all attribute names with prefix "pio_" are reserved. You should not use the prefix "pio_" when define your custom attributes to avoid conflicts.
+
+**User Action on Item**
+
+  To import a user "rate" action record from your App with user id = "u100", item id = "i200" and rating = 2:
+
+    >>> client.identify("u100")
+    >>> client.record_action_on_item("rate", "i200", { "pio_rate": 2 })
+
+  .. note:: the "pio_rate" attribute is required for "rate" action.
+
+  To import a "view" action record from your App for the same user and item:
+
+    >>> client.record_action_on_item("view", "i200" )
+
+  To import a "like" record with predefined optional timestamp attribute "pio_t":
+
+    >>> client.record_action_on_item("like", "i200", { "pio_t": 12345678 })
+
+  .. note:: predifined actions: "like", "dislike", "rate", "view", "conversion"
+
+**Item Recommendation**
+
+  When there is enough data imported from your App and the prediction results are ready, you can get recommendations for a user.
+
+  To get top 5 item recommendation for the same user id from the item recommendation engine "engine-1"
+
+    >>> result = client.get_itemrec_topn(5, "engine-1")
+
+Please refer to the documentation of the :class:`predictionio.Client` class for more details of all available methods.
 
 
 Error Handling
@@ -41,10 +82,10 @@ Error Handling
 An exception will be raised when an error occur during the request. Please refer to the documentation of the :class:`predictionio.Client` class for details.
 In general, you may want to catch the exception and decide what to do with the error (such as logging it).
 
-For example, the method :meth:`~Client.user_rate_item` may raise ``U2IActionNotCreatedError``.
+For example, the method :meth:`~Client.record_action_on_item` may raise ``U2IActionNotCreatedError``.
 
    >>> try:
-   >>>   client.user_rate_item(uid="100", iid="200", rate=2)
+   >>>   client.record_action_on_item("view", "i200")
    >>> except:
    >>>   <log the error>
 
@@ -73,7 +114,7 @@ This allows you to do other work between these two steps.
 For example, the following code first generates an asynchronous request to retrieve recommendations, then get the result at later time::
 
     >>> # Generates asynchronous request and return an AsyncRequest object
-    >>> request = client.aget_recommendation(uid="100", n=5, engine="engine-1")
+    >>> request = client.aget_itemrec_topn(5, "engine-1")
     >>> <...you can do other things here...>
     >>> try:
     >>>    result = client.aresp(request) # check the request status and get the return data.
@@ -91,7 +132,7 @@ For example, to import 100000 of user records::
    >>> # generate 100000 asynchronous requests and store the AsyncRequest objects
    >>> req = {}
    >>> for i in range(100000):
-   >>>    req[i] = client.acreate_user(uid=you_user_record[i].uid)
+   >>>    req[i] = client.acreate_user(user_record[i].uid)
    >>>
    >>> <...you can do other things here...>
    >>>
@@ -106,7 +147,7 @@ Alternatively, you can use blocking requests to import large amount of data, but
 
   >>> for i in range(100000):
   >>>   try:
-  >>>      client.create_user(uid=you_user_record[i].uid)
+  >>>      client.create_user(user_record[i].uid)
   >>>   except:
   >>>      <log the error>
 
@@ -139,6 +180,7 @@ predictionio.Client Class
       requirement.
 
    .. automethod:: close
+   .. automethod:: identify
 
    |
 
@@ -155,8 +197,10 @@ predictionio.Client Class
    .. automethod:: get_item
    .. automethod:: delete_item
 
-   .. automethod:: get_itemrec
+   .. automethod:: get_itemrec_topn
+   .. automethod:: record_action_on_item
 
+   .. automethod:: get_itemrec
    .. automethod:: user_conversion_item
    .. automethod:: user_dislike_item
    .. automethod:: user_like_item
@@ -177,8 +221,10 @@ predictionio.Client Class
    .. automethod:: aget_item
    .. automethod:: adelete_item
 
-   .. automethod:: aget_itemrec
+   .. automethod:: aget_itemrec_topn
+   .. automethod:: arecord_action_on_item
 
+   .. automethod:: aget_itemrec
    .. automethod:: auser_conversion_item
    .. automethod:: auser_dislike_item
    .. automethod:: auser_like_item

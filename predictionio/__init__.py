@@ -124,7 +124,7 @@ class Client:
         self._connection.close()
 
     def identify(self, uid):
-        """Identify the uid performing the actions
+        """Identify the uid
 
         :param uid: user id. type str.
         """
