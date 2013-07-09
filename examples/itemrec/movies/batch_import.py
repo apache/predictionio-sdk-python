@@ -50,7 +50,8 @@ def batch_import_task(app_data, client, all_info=False):
 				sys.stdout.write('\r[Info] %s' % count)
 				sys.stdout.flush()
 
-		client.user_rate_item(v.uid, v.iid, v.rating, t=v.t)
+		client.identify(v.uid)
+		client.record_action_on_item("rate", v.iid, { "pio_rate": v.rating, "pio_t": v.t })
 
 	sys.stdout.write('\r[Info] %s rate actions were imported.\n' % count)
 	sys.stdout.flush()
@@ -59,7 +60,7 @@ def batch_import_task(app_data, client, all_info=False):
 if __name__ == '__main__':
 
 	app_data = AppData()
-	client = predictionio.Client(appkey=APP_KEY, threads=1, apiurl=API_URL)
+	client = predictionio.Client(APP_KEY, 1, API_URL)
 	batch_import_task(app_data, client)
 	client.close()
 
