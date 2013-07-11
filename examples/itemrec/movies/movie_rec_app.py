@@ -11,7 +11,7 @@ class App:
 
 	def __init__(self):
 		self._app_data = AppData()
-		self._client = predictionio.Client(appkey=APP_KEY, threads=1, apiurl=API_URL)
+		self._client = predictionio.Client(APP_KEY, 1, API_URL)
 
 	def run(self):
 		state = "[Main Menu]"
@@ -54,7 +54,8 @@ class App:
 				n = 10
 				print "[Info] Getting top %s item recommendations for user %s..." % (n, u.uid)
 				try:
-					rec = self._client.get_itemrec(uid=u.uid, n=n, engine=ENGINE_NAME)
+					self._client.identify(u.uid)
+					rec = self._client.get_itemrec_topn(n, ENGINE_NAME)
 					u.rec = rec['iids']
 					self.display_items(u.rec)
 				except predictionio.ItemRecNotFoundError:
