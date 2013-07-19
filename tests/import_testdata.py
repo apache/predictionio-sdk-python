@@ -7,7 +7,7 @@ APP_KEY = "zHCx9Xv9sZ9Q21LMINKcrgZNgGJ3oReZA9Zvf0MsyJYDv6FwgHEeEI0XTEY5aEsu"
 API_URL = "http://localhost:8000"
 
 if __name__ == "__main__":
-	client = predictionio.Client(APP_KEY)
+	client = predictionio.Client(APP_KEY, 1, API_URL)
 
 	client.create_user("u0")
 	client.create_user("u1")
