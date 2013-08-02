@@ -56,7 +56,7 @@ class App:
 				try:
 					self._client.identify(u.uid)
 					rec = self._client.get_itemrec_topn(n, ENGINE_NAME)
-					u.rec = rec['iids']
+					u.rec = rec['pio_iids']
 					self.display_items(u.rec)
 				except predictionio.ItemRecNotFoundError:
 					print "[Info] Recommendation not found"
