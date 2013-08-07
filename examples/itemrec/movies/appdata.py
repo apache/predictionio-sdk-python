@@ -62,7 +62,7 @@ class AppData:
 		print "[Info] Initializing users..."
 		f = open(self._users_file, 'r')
 		for line in f:
-			data = line.split(USERS_FILE_DELIMITER)
+			data = line.rstrip('\r\n').split(USERS_FILE_DELIMITER)
 			self.add_user(User(data[0]))
 		f.close()
 		print "[Info] %s users were initialized." % len(self._users)
@@ -74,7 +74,7 @@ class AppData:
 		print "[Info] Initializing items..."
 		f = open(self._items_file, 'r')
 		for line in f:
-			data = line.split(ITEMS_FILE_DELIMITER)
+			data = line.rstrip('\r\n').split(ITEMS_FILE_DELIMITER)
 			self.add_item(Item(data[0], data[1]))
 		f.close()
 		print "[Info] %s items were initialized." % len(self._items)
@@ -86,7 +86,7 @@ class AppData:
 		print "[Info] Initializing rate actions..."
 		f = open(self._rate_actions_file, 'r')
 		for line in f:
-			data = line.split(RATE_ACTIONS_DELIMITER)
+			data = line.rstrip('\r\n').split(RATE_ACTIONS_DELIMITER)
 			t = datetime.datetime.utcfromtimestamp(int(data[3])).isoformat()
 			self.add_rate_action(RateAction(data[0], data[1], data[2], t))
 		f.close()

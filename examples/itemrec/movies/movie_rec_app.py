@@ -92,7 +92,7 @@ class App:
 				print "\n[Info] Go back to previous menu..."
 				break
 			else:
-				print "[Error] invalid user id. Go back to previous menu..."
+				print "[Error] invalid user id %s. Go back to previous menu..." % choice
 				break
 	
 	def display_items(self, iids, all_info=False):
