@@ -38,11 +38,11 @@ Afterwards, you can import data or retrieve recommendations for your App by call
 
   To import an item record with the predefined optional attribute "pio_latlng":
 
-    >>> client.create_user("i200", ("type3",), { "pio_latlng" : [1.23, 4.56] })
+    >>> client.create_item("i200", ("type3",), { "pio_latlng" : [1.23, 4.56] })
 
   You may also define your own custom attribute "custom" = "value":
 
-    >>> client.create_user("i200", ("type3",), { "pio_latlng" : [1.23, 4.56], "custom": "value" })
+    >>> client.create_item("i200", ("type3",), { "pio_latlng" : [1.23, 4.56], "custom": "value" })
 
   .. note:: custom attributes and values could be any string but all attribute names with prefix "pio_" are reserved. You should not use the prefix "pio_" when define your custom attributes to avoid conflicts.
 
@@ -63,7 +63,7 @@ Afterwards, you can import data or retrieve recommendations for your App by call
 
     >>> client.record_action_on_item("like", "i200", { "pio_t": 12345678 })
 
-  .. note:: predifined actions: "like", "dislike", "rate", "view", "conversion"
+  .. note:: predefined actions: "like", "dislike", "rate", "view", "conversion"
 
 **Item Recommendation**
 
