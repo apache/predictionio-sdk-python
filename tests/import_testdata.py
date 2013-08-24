@@ -3,8 +3,13 @@ Import simple test data for testing getting itemrec
 """
 import predictionio
 
-APP_KEY = "zHCx9Xv9sZ9Q21LMINKcrgZNgGJ3oReZA9Zvf0MsyJYDv6FwgHEeEI0XTEY5aEsu"
+APP_KEY = "y2Fk4BACEGYeJnqBF4zL9TmrIBdF9va3gyFaLsnM7PVyUNf0G00zC8vCnyBx5hdA"
 API_URL = "http://localhost:8000"
+
+MIN_VERSION = '0.5.0'
+if predictionio.__version__ < MIN_VERSION:
+    err = "Require PredictionIO Python SDK version >= %s" % MIN_VERSION
+    raise Exception(err)
 
 if __name__ == "__main__":
 	client = predictionio.Client(APP_KEY, 1, API_URL)

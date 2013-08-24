@@ -9,7 +9,7 @@ __email__ = "help@tappingstone.com"
 __copyright__ = "Copyright 2013, TappingStone, Inc."
 __license__ = "Apache License, Version 2.0"
 
-__version__ = "0.5.0"
+__version__ = "0.6.0-SNAPSHOT"
 
 
 # import packages
@@ -61,6 +61,10 @@ class U2IActionNotCreatedError(PredictionIOAPIError):
 
 class ItemRecNotFoundError(PredictionIOAPIError):
     "Error happened when tried to get item recommendation"
+    pass
+
+class ItemSimNotFoundError(PredictionIOAPIError):
+    "Error happened when tried to get similar items"
     pass
 
 class InvalidArgumentError(PredictionIOAPIError):
@@ -485,6 +489,69 @@ class Client:
         request = self._aget_user_itemrec_topn(uid, n, engine, params)
         return request
 
+    def _aget_itemsim_topn(self, engine, iid, n, params={}):
+        """Private function to asynchronously get top n similar items of the item
+
+        :param engine: name of the prediction engine. type str.
+        :param iid: item id. type str.
+        :param n: number of similar items. type int.
+        :param params: optional parameters. type dictionary
+                For example, { 'pio_itypes' : ("t1","t2") }
+        :returns:
+            AsyncRequest object. You should call the aresp() method using this AsyncRequest
+            object as argument to get the final result or status of this asynchronous request.
+        """
+        if "pio_itypes" in params:
+            params["pio_itypes"] = ",".join(params["pio_itypes"])
+        if "pio_latlng" in params:
+            params["pio_latlng"] = ",".join(map(str, params["pio_latlng"]))
+        if "pio_attributes" in params:
+            params["pio_attributes"] = ",".join(params["pio_attributes"])
+
+        enc_iid = urllib.quote(iid,"") # replace special char with %xx
+        path = "%s/engines/itemsim/%s/topn.json" % (self.apiversion, engine)
+        request = AsyncRequest("GET", path, pio_appkey=self.appkey, pio_iid=enc_iid, pio_n=n, **params)
+        request.set_rfunc(self._aget_itemsim_topn_resp)
+        self._connection.make_request(request)
+        return request
+
+    def _aget_itemsim_topn_resp(self, response):
+        """Private function to handle the AsyncResponse of the aget_itemsim request
+
+        :param response: AsyncResponse object
+
+        :returns:
+            data in dictionary format.
+
+        :raises:
+            ItemSimNotFoundError.
+        """
+        if response.error is not None:
+            raise ItemSimNotFoundError("Exception happened: %s for request %s" % \
+                                               (response.error, response.request))
+        elif response.status != httplib.OK:
+            raise ItemSimNotFoundError("request: %s status: %s body: %s" % \
+                                               (response.request, response.status, response.body))
+
+        data = json.loads(response.body) # convert json string to dict
+        return data
+
+    def aget_itemsim_topn(self, engine, iid, n, params={}):
+        """Asynchronously get top n similar items of the item
+
+        :param engine: name of the prediction engine. type str.
+        :param iid: item id. type str.
+        :param n: number of similar items. type int.
+        :param params: optional parameters. type dictionary
+                For example, { 'pio_itypes' : ("t1",) }
+        :returns:
+            AsyncRequest object. You should call the aresp() method using this AsyncRequest
+            object as argument to get the final result or status of this asynchronous request.
+        """
+
+        request = self._aget_itemsim_topn(engine, iid, n, params)
+        return request
+
     def _auser_action_on_item(self, action, uid, iid, params):
         """Private function to asynchronously create an user action on an item
 
@@ -792,6 +859,25 @@ class Client:
 
         """
         request = self.aget_itemrec(uid, n, engine, **params)
+        result = self.aresp(request)
+        return result
+
+    def get_itemsim_topn(self, engine, iid, n, params={}):
+        """Blocking request to get top n similar items of the item
+
+        :param engine: name of the prediction engine. type str.
+        :param iid: item id. type str.
+        :param n: number of similar items. type int.
+        :param params: optional parameters. type dictionary
+                For example, { 'pio_itypes' : ("t1",) }
+        :returns:
+            data in dictionary format.
+
+        :raises:
+            ItemSimNotFoundError.
+        """
+
+        request = self.aget_itemsim_topn(engine, iid, n, params)
         result = self.aresp(request)
         return result
 

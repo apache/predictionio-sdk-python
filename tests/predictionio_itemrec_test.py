@@ -14,6 +14,11 @@ API_URL = "http://localhost:8000" # PredictoinIO Server
 
 DEBUG = True
 
+MIN_VERSION = '0.6.0'
+if predictionio.__version__ < MIN_VERSION:
+    err = "Require PredictionIO Python SDK version >= %s" % MIN_VERSION
+    raise Exception(err)
+
 class TestPredictionIO(unittest.TestCase):
 	def setUp(self):
 		pass
