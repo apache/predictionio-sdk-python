@@ -175,57 +175,7 @@ class TestPredictionIO(unittest.TestCase):
 
         client.close()
 
-    def test_get_itemrec_deprecated(self):
-        client = predictionio.Client(APP_KEY, 1, API_URL)
 
-        try:
-            itemrec = client.get_itemrec("u1", 10, "test-python-engine")
-        except predictionio.ItemRecNotFoundError as e:
-            pass # expected exception
-        except:
-            raise
-
-        client.close()
-
-    def test_get_itemrec_topn(self):
-        client = predictionio.Client(APP_KEY, 1, API_URL)
-
-        client.identify("u103")
-
-        try:
-            itemrec = client.get_itemrec_topn(10, "test-python-engine")
-        except predictionio.ItemRecNotFoundError as e:
-            pass # expected exception
-        except:
-            raise
-
-        try:
-            itemrec = client.get_itemrec_topn(10, "test-python-engine", { "pio_itypes": ("t1",), "pio_latlng": [1.34, 5.67], "pio_within": 5.0, "pio_unit": "km", "pio_attributes": ["custom1", "custom2"]  })
-        except predictionio.ItemRecNotFoundError as e:
-            pass # expected exception
-        except:
-            raise
-
-        client.close()
-
-    def test_get_itemsim_topn(self):
-        client = predictionio.Client(APP_KEY, 1, API_URL)
-
-        try:
-            itemsim = client.get_itemsim_topn("test-python-engine", "i1unknwon", 10)
-        except predictionio.ItemSimNotFoundError as e:
-            pass # expected exception
-        except:
-            raise
-
-        try:
-            itemsim = client.get_itemsim_topn("test-python-engine", "i1unknwon", 10, { "pio_itypes": ("t1",), "pio_latlng": [1.34, 5.67], "pio_within": 5.0, "pio_unit": "km", "pio_attributes": ["custom1", "custom2"]  })
-        except predictionio.ItemSimNotFoundError as e:
-            pass # expected exception
-        except:
-            raise
-
-        client.close()
 
 """
 to run individual test:

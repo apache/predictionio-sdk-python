@@ -16,8 +16,8 @@ DEBUG = True
 
 MIN_VERSION = '0.6.0'
 if predictionio.__version__ < MIN_VERSION:
-    err = "Require PredictionIO Python SDK version >= %s" % MIN_VERSION
-    raise Exception(err)
+	err = "Require PredictionIO Python SDK version >= %s" % MIN_VERSION
+	raise Exception(err)
 
 class TestPredictionIO(unittest.TestCase):
 	def setUp(self):
@@ -25,6 +25,25 @@ class TestPredictionIO(unittest.TestCase):
 
 	def tearDown(self):
 		pass
+
+	def test_get_itemsim_exception(self):
+		client = predictionio.Client(APP_KEY, 1, API_URL)
+
+		try:
+			itemsim = client.get_itemsim_topn("python-itemsim-engine", "iidwithoutsim", 10)
+		except predictionio.ItemSimNotFoundError as e:
+			pass # expected exception
+		except:
+			raise
+
+		try:
+			itemsim = client.get_itemsim_topn("python-itemsim-engine", "iidwithoutsim", 10, { "pio_itypes": ("t1",), "pio_latlng": [1.34, 5.67], "pio_within": 5.0, "pio_unit": "km", "pio_attributes": ["custom1", "custom2"]  })
+		except predictionio.ItemSimNotFoundError as e:
+			pass # expected exception
+		except:
+			raise
+
+		client.close()
 
 	def test_get_itemsim(self):
 		client = predictionio.Client(APP_KEY, 1, API_URL)
