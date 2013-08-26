@@ -9,7 +9,7 @@ __email__ = "help@tappingstone.com"
 __copyright__ = "Copyright 2013, TappingStone, Inc."
 __license__ = "Apache License, Version 2.0"
 
-__version__ = "0.6.0-SNAPSHOT"
+__version__ = "0.6.0"
 
 
 # import packages

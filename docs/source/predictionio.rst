@@ -199,6 +199,10 @@ predictionio.Client Class
   .. automethod:: get_item
   .. automethod:: delete_item
 
+  .. automethod:: record_action_on_item
+
+    .. versionadded:: 0.5.0
+
   .. automethod:: get_itemrec_topn
 
     .. versionadded:: 0.5.0
@@ -206,9 +210,9 @@ predictionio.Client Class
     .. versionchanged:: 0.6.0
       Change the order of parameters.
 
-  .. automethod:: record_action_on_item
+  .. automethod:: get_itemsim_topn
 
-    .. versionadded:: 0.5.0
+    .. versionadded:: 0.6.0
 
   .. automethod:: get_itemrec
   
@@ -254,6 +258,10 @@ predictionio.Client Class
   .. automethod:: aget_item
   .. automethod:: adelete_item
 
+  .. automethod:: arecord_action_on_item
+
+    .. versionadded:: 0.5.0
+
   .. automethod:: aget_itemrec_topn
 
     .. versionadded:: 0.5.0
@@ -261,9 +269,9 @@ predictionio.Client Class
     .. versionchanged:: 0.6.0
       Change the order of parameters.
 
-  .. automethod:: arecord_action_on_item
+  .. automethod:: aget_itemsim_topn
 
-    .. versionadded:: 0.5.0
+    .. versionadded:: 0.6.0
 
   .. automethod:: aget_itemrec
 
