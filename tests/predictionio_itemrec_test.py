@@ -44,14 +44,14 @@ class TestPredictionIO(unittest.TestCase):
 		client.identify("uidwithoutrec")
 
 		try:
-			itemrec = client.get_itemrec_topn(10, "python-itemrec-engine")
+			itemrec = client.get_itemrec_topn("python-itemrec-engine", 10)
 		except predictionio.ItemRecNotFoundError as e:
 			pass # expected exception
 		except:
 			raise
 
 		try:
-			itemrec = client.get_itemrec_topn(10, "python-itemrec-engine", { "pio_itypes": ("t1",), "pio_latlng": [1.34, 5.67], "pio_within": 5.0, "pio_unit": "km", "pio_attributes": ["custom1", "custom2"]  })
+			itemrec = client.get_itemrec_topn("python-itemrec-engine", 10, { "pio_itypes": ("t1",), "pio_latlng": [1.34, 5.67], "pio_within": 5.0, "pio_unit": "km", "pio_attributes": ["custom1", "custom2"]  })
 		except predictionio.ItemRecNotFoundError as e:
 			pass # expected exception
 		except:
@@ -179,7 +179,7 @@ class TestPredictionIO(unittest.TestCase):
 		# request more
 		client.identify("u0")
 		try:
-			itemrec = client.get_itemrec_topn(10, "python-itemrec-engine")
+			itemrec = client.get_itemrec_topn("python-itemrec-engine", 10)
 		except predictionio.ItemRecNotFoundError as e:
 			print "ERROR: have you run import_testdata.py and then wait for the algorithm training completion?"
 			raise
@@ -190,7 +190,7 @@ class TestPredictionIO(unittest.TestCase):
 
 		client.identify("u1")
 		try:
-			itemrec = client.get_itemrec_topn(10, "python-itemrec-engine")
+			itemrec = client.get_itemrec_topn("python-itemrec-engine", 10)
 		except predictionio.ItemRecNotFoundError as e:
 			print "ERROR: have you run import_testdata.py and then wait for the algorithm training completion?"
 			raise
@@ -202,7 +202,7 @@ class TestPredictionIO(unittest.TestCase):
 
 		client.identify("u2")
 		try:
-			itemrec = client.get_itemrec_topn(10, "python-itemrec-engine")
+			itemrec = client.get_itemrec_topn("python-itemrec-engine", 10)
 		except predictionio.ItemRecNotFoundError as e:
 			print "ERROR: have you run import_testdata.py and then wait for the algorithm training completion?"
 			raise
@@ -214,7 +214,7 @@ class TestPredictionIO(unittest.TestCase):
 
 		client.identify("u3")
 		try:
-			itemrec = client.get_itemrec_topn(6, "python-itemrec-engine")
+			itemrec = client.get_itemrec_topn("python-itemrec-engine", 6)
 		except predictionio.ItemRecNotFoundError as e:
 			print "ERROR: have you run import_testdata.py and then wait for the algorithm training completion?"
 			raise
@@ -227,7 +227,7 @@ class TestPredictionIO(unittest.TestCase):
 		# request less
 		client.identify("u0")
 		try:
-			itemrec = client.get_itemrec_topn(1, "python-itemrec-engine")
+			itemrec = client.get_itemrec_topn("python-itemrec-engine", 1)
 		except predictionio.ItemRecNotFoundError as e:
 			print "ERROR: have you run import_testdata.py and then wait for the algorithm training completion?"
 			raise
@@ -238,7 +238,7 @@ class TestPredictionIO(unittest.TestCase):
 
 		client.identify("u0")
 		try:
-			itemrec = client.get_itemrec_topn(2, "python-itemrec-engine")
+			itemrec = client.get_itemrec_topn("python-itemrec-engine", 2)
 		except predictionio.ItemRecNotFoundError as e:
 			print "ERROR: have you run import_testdata.py and then wait for the algorithm training completion?"
 			raise
@@ -252,7 +252,7 @@ class TestPredictionIO(unittest.TestCase):
 		# pio_itypes
 		client.identify("u0")
 		try:
-			itemrec = client.get_itemrec_topn(10, "python-itemrec-engine", {"pio_itypes": ("t1","t2")})
+			itemrec = client.get_itemrec_topn("python-itemrec-engine", 10, {"pio_itypes": ("t1","t2")})
 		except predictionio.ItemRecNotFoundError as e:
 			print "ERROR: have you run import_testdata.py and then wait for the algorithm training completion?"
 			raise
@@ -264,7 +264,7 @@ class TestPredictionIO(unittest.TestCase):
 		# subset itypes
 		client.identify("u0")
 		try:
-			itemrec = client.get_itemrec_topn(10, "python-itemrec-engine", {"pio_itypes": ("t2",)})
+			itemrec = client.get_itemrec_topn("python-itemrec-engine", 10, {"pio_itypes": ("t2",)})
 		except predictionio.ItemRecNotFoundError as e:
 			print "ERROR: have you run import_testdata.py and then wait for the algorithm training completion?"
 			raise
@@ -276,7 +276,7 @@ class TestPredictionIO(unittest.TestCase):
 		# nonexisting itypes
 		client.identify("u0")
 		try:
-			itemrec = client.get_itemrec_topn(10, "python-itemrec-engine", {"pio_itypes": ("other-itype",)})
+			itemrec = client.get_itemrec_topn("python-itemrec-engine", 10, {"pio_itypes": ("other-itype",)})
 		except predictionio.ItemRecNotFoundError as e:
 			pass # expected no recommendation
 		except:
@@ -285,7 +285,7 @@ class TestPredictionIO(unittest.TestCase):
 		# pio_attributes
 		client.identify("u0")
 		try:
-			itemrec = client.get_itemrec_topn(10, "python-itemrec-engine", {"pio_itypes": ("t1",), "pio_attributes": ["custom1", "custom2"]})
+			itemrec = client.get_itemrec_topn("python-itemrec-engine", 10, {"pio_itypes": ("t1",), "pio_attributes": ["custom1", "custom2"]})
 		except predictionio.ItemRecNotFoundError as e:
 			print "ERROR: have you run import_testdata.py and then wait for the algorithm training completion?"
 			raise

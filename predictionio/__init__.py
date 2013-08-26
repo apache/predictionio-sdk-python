@@ -409,12 +409,12 @@ class Client:
                                       (response.request, response.status, response.body))
         return None
 
-    def _aget_user_itemrec_topn(self, uid, n, engine, params={}):
+    def _aget_user_itemrec_topn(self, engine, uid, n, params={}):
         """Private function to asynchronously get recommendations for user
 
+        :param engine: name of the prediction engine. type str.
         :param uid: user id. type str.
         :param n: number of recommendation. type int.
-        :param engine: name of the prediction engine. type str.
         :param params: optional parameters. type dictionary
                 For example, { 'pio_itypes' : ("t1","t2") }
         :returns:
@@ -456,11 +456,11 @@ class Client:
         data = json.loads(response.body) # convert json string to dict
         return data
 
-    def aget_itemrec_topn(self, n, engine, params={}):
+    def aget_itemrec_topn(self, engine, n, params={}):
         """Asynchronously get recommendations for the identified user
 
-        :param n: number of recommendation. type int.
         :param engine: name of the prediction engine. type str.
+        :param n: number of recommendation. type int.
         :param params: optional parameters. type dictionary
                 For example, { 'pio_itypes' : ("t1",) }
         :returns:
@@ -471,7 +471,7 @@ class Client:
         if self._uid is None:
             raise InvalidArgumentError("uid is not identified. Please call identify(uid) first.")
 
-        request = self._aget_user_itemrec_topn(self._uid, n, engine, params)
+        request = self._aget_user_itemrec_topn(engine, self._uid, n, params)
         return request
 
     def aget_itemrec(self, uid, n, engine, **params):
@@ -486,7 +486,7 @@ class Client:
             AsyncRequest object. You should call the aresp() method using this AsyncRequest
             object as argument to get the final result or status of this asynchronous request.
         """
-        request = self._aget_user_itemrec_topn(uid, n, engine, params)
+        request = self._aget_user_itemrec_topn(engine, uid, n, params)
         return request
 
     def _aget_itemsim_topn(self, engine, iid, n, params={}):
@@ -825,11 +825,11 @@ class Client:
         result = self.aresp(request)
         return result
 
-    def get_itemrec_topn(self, n, engine, params={}):
+    def get_itemrec_topn(self, engine, n, params={}):
         """Blocking request to get recommendations for the identified user
 
-        :param n: number of recommendation. type int.
         :param engine: name of the prediction engine. type str.
+        :param n: number of recommendation. type int.
         :param params: optional parameters. type dictionary
                 For example, { 'pio_itypes' : ("t1", "t2") }
         :returns:
@@ -838,7 +838,7 @@ class Client:
         :raises:
             ItemRecNotFoundError.
         """
-        request = self.aget_itemrec_topn(n, engine, params)
+        request = self.aget_itemrec_topn(engine, n, params)
         result = self.aresp(request)
         return result
 
