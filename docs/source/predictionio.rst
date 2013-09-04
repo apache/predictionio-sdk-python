@@ -65,13 +65,19 @@ Afterwards, you can import data or retrieve recommendations for your App by call
 
   .. note:: predefined actions: "like", "dislike", "rate", "view", "conversion"
 
-**Item Recommendation**
+**Item Recommendation Engine**
 
   When there is enough data imported from your App and the prediction results are ready, you can get recommendations for a user.
 
   To get top 5 item recommendation for the same user id from the item recommendation engine "engine-1"
 
     >>> result = client.get_itemrec_topn("engine-1", 5)
+
+**Item Similarity Engine**
+
+  To get top 5 similar items of the item i200 from the item similarity engine "engine-2"
+
+    >>> result = client.get_itemsim_topn("engine-2", "i200", 5)
 
 Please refer to the documentation of the :class:`predictionio.Client` class for more details of all available methods.
 
