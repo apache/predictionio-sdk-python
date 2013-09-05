@@ -55,7 +55,7 @@ class App:
 				print "[Info] Getting top %s item recommendations for user %s..." % (n, u.uid)
 				try:
 					self._client.identify(u.uid)
-					rec = self._client.get_itemrec_topn(n, ENGINE_NAME)
+					rec = self._client.get_itemrec_topn(ENGINE_NAME, n)
 					u.rec = rec['pio_iids']
 					self.display_items(u.rec)
 				except predictionio.ItemRecNotFoundError:

@@ -28,7 +28,7 @@ Afterwards, you can import data or retrieve recommendations for your App by call
 
     >>> client.create_user("u100", { "pio_latlng" : [1.23, 4.56], "custom": "value" })
 
-  .. note:: custom attributes and values could be any string but all attribute names with prefix "pio_" are reserved. You should not use the prefix "pio_" when define your custom attributes to avoid conflicts.
+  .. note:: custom attributes and values could be any string but all attribute names with prefix ``'pio_'`` are reserved. You should not use the prefix ``'pio_'`` when define your custom attributes to avoid conflicts.
 
 **Item**
 
@@ -38,13 +38,13 @@ Afterwards, you can import data or retrieve recommendations for your App by call
 
   To import an item record with the predefined optional attribute "pio_latlng":
 
-    >>> client.create_user("i200", ("type3",), { "pio_latlng" : [1.23, 4.56] })
+    >>> client.create_item("i200", ("type3",), { "pio_latlng" : [1.23, 4.56] })
 
   You may also define your own custom attribute "custom" = "value":
 
-    >>> client.create_user("i200", ("type3",), { "pio_latlng" : [1.23, 4.56], "custom": "value" })
+    >>> client.create_item("i200", ("type3",), { "pio_latlng" : [1.23, 4.56], "custom": "value" })
 
-  .. note:: custom attributes and values could be any string but all attribute names with prefix "pio_" are reserved. You should not use the prefix "pio_" when define your custom attributes to avoid conflicts.
+  .. note:: custom attributes and values could be any string but all attribute names with prefix ``'pio_'`` are reserved. You should not use the prefix ``'pio_'`` when define your custom attributes to avoid conflicts.
 
 **User Action on Item**
 
@@ -63,15 +63,21 @@ Afterwards, you can import data or retrieve recommendations for your App by call
 
     >>> client.record_action_on_item("like", "i200", { "pio_t": 12345678 })
 
-  .. note:: predifined actions: "like", "dislike", "rate", "view", "conversion"
+  .. note:: predefined actions: "like", "dislike", "rate", "view", "conversion"
 
-**Item Recommendation**
+**Item Recommendation Engine**
 
   When there is enough data imported from your App and the prediction results are ready, you can get recommendations for a user.
 
   To get top 5 item recommendation for the same user id from the item recommendation engine "engine-1"
 
-    >>> result = client.get_itemrec_topn(5, "engine-1")
+    >>> result = client.get_itemrec_topn("engine-1", 5)
+
+**Item Similarity Engine**
+
+  To get top 5 similar items of the item i200 from the item similarity engine "engine-2"
+
+    >>> result = client.get_itemsim_topn("engine-2", "i200", 5)
 
 Please refer to the documentation of the :class:`predictionio.Client` class for more details of all available methods.
 
@@ -114,7 +120,7 @@ This allows you to do other work between these two steps.
 For example, the following code first generates an asynchronous request to retrieve recommendations, then get the result at later time::
 
     >>> # Generates asynchronous request and return an AsyncRequest object
-    >>> request = client.aget_itemrec_topn(5, "engine-1")
+    >>> request = client.aget_itemrec_topn("engine-1", 5)
     >>> <...you can do other things here...>
     >>> try:
     >>>    result = client.aresp(request) # check the request status and get the return data.
@@ -129,19 +135,19 @@ When you import large amount of data at once, you may also use asynchronous requ
 
 For example, to import 100000 of user records::
 
-   >>> # generate 100000 asynchronous requests and store the AsyncRequest objects
-   >>> req = {}
-   >>> for i in range(100000):
-   >>>    req[i] = client.acreate_user(user_record[i].uid)
-   >>>
-   >>> <...you can do other things here...>
-   >>>
-   >>> # now check the status of the previous asynchronous requests
-   >>> for i in range(100000):
-   >>>   try:
-   >>>     result = client.aresp(req[i])
-   >>>   except:
-   >>>     <log the error>
+  >>> # generate 100000 asynchronous requests and store the AsyncRequest objects
+  >>> req = {}
+  >>> for i in range(100000):
+  >>>    req[i] = client.acreate_user(user_record[i].uid)
+  >>>
+  >>> <...you can do other things here...>
+  >>>
+  >>> # now check the status of the previous asynchronous requests
+  >>> for i in range(100000):
+  >>>   try:
+  >>>     result = client.aresp(req[i])
+  >>>   except:
+  >>>     <log the error>
 
 Alternatively, you can use blocking requests to import large amount of data, but this has significantly lower performance::
 
@@ -159,77 +165,150 @@ predictionio.Client Class
 
 .. Autoclass:: Client
 
-   .. note::
+  .. note::
 
-      The "threads" parameter specifies the number of connection threads to
-      the PredictionIO API server. Minimum is 1. The client object will spawn
-      out the specified number of threads. Each of them will establish a
-      connection with the PredictionIO API server and handle requests
-      concurrently.
+    The "threads" parameter specifies the number of connection threads to
+    the PredictionIO API server. Minimum is 1. The client object will spawn
+    out the specified number of threads. Each of them will establish a
+    connection with the PredictionIO API server and handle requests
+    concurrently.
 
-   .. note::
+  .. note::
 
-      If you ONLY use :ref:`blocking request methods <sync-methods-label>`,
-      setting "threads" to 1 is enough (higher number will not improve
-      anything since every request will be blocking). However, if you want
-      to take full advantage of
-      :ref:`asynchronous request methods <async-methods-label>`, you should
-      specify a larger number for "threads" to increase the performance of
-      handling concurrent requests (although setting "threads" to 1 will still
-      work). The optimal setting depends on your system and application
-      requirement.
+    If you ONLY use :ref:`blocking request methods <sync-methods-label>`,
+    setting "threads" to 1 is enough (higher number will not improve
+    anything since every request will be blocking). However, if you want
+    to take full advantage of
+    :ref:`asynchronous request methods <async-methods-label>`, you should
+    specify a larger number for "threads" to increase the performance of
+    handling concurrent requests (although setting "threads" to 1 will still
+    work). The optimal setting depends on your system and application
+    requirement.
 
-   .. automethod:: close
-   .. automethod:: identify
+  .. automethod:: close
+  .. automethod:: identify
 
-   |
+    .. versionadded:: 0.5.0
 
-   .. _sync-methods-label:
+  |
 
-   .. note:: The following is blocking (synchronous) request methods
+  .. _sync-methods-label:
 
-   .. automethod:: get_status
-   .. automethod:: create_user
-   .. automethod:: get_user
-   .. automethod:: delete_user
+  .. note:: The following is blocking (synchronous) request methods
 
-   .. automethod:: create_item
-   .. automethod:: get_item
-   .. automethod:: delete_item
+  .. automethod:: get_status
+  .. automethod:: create_user
+  .. automethod:: get_user
+  .. automethod:: delete_user
 
-   .. automethod:: get_itemrec_topn
-   .. automethod:: record_action_on_item
+  .. automethod:: create_item
+  .. automethod:: get_item
+  .. automethod:: delete_item
 
-   .. automethod:: get_itemrec
-   .. automethod:: user_conversion_item
-   .. automethod:: user_dislike_item
-   .. automethod:: user_like_item
-   .. automethod:: user_rate_item
-   .. automethod:: user_view_item
+  .. automethod:: record_action_on_item
 
-   |
+    .. versionadded:: 0.5.0
 
-   .. _async-methods-label:
+  .. automethod:: get_itemrec_topn
 
-   .. note:: The following is non-blocking (asynchronous) request methods
+    .. versionadded:: 0.5.0
 
-   .. automethod:: acreate_user
-   .. automethod:: aget_user
-   .. automethod:: adelete_user
+    .. versionchanged:: 0.6.0
+      Change the order of parameters.
 
-   .. automethod:: acreate_item
-   .. automethod:: aget_item
-   .. automethod:: adelete_item
+  .. automethod:: get_itemsim_topn
 
-   .. automethod:: aget_itemrec_topn
-   .. automethod:: arecord_action_on_item
+    .. versionadded:: 0.6.0
 
-   .. automethod:: aget_itemrec
-   .. automethod:: auser_conversion_item
-   .. automethod:: auser_dislike_item
-   .. automethod:: auser_like_item
-   .. automethod:: auser_rate_item
-   .. automethod:: auser_view_item
-   .. automethod:: aresp
+  .. automethod:: get_itemrec
+  
+    .. deprecated:: 0.5.0
+      Use :func:`get_itemrec_topn` instead.
+
+  .. automethod:: user_conversion_item
+      
+    .. deprecated:: 0.5.0
+      Use :func:`record_action_on_item` instead.
+
+  .. automethod:: user_dislike_item
+
+    .. deprecated:: 0.5.0
+      Use :func:`record_action_on_item` instead.
+
+  .. automethod:: user_like_item
+
+    .. deprecated:: 0.5.0
+      Use :func:`record_action_on_item` instead.
+
+  .. automethod:: user_rate_item
+
+    .. deprecated:: 0.5.0
+      Use :func:`record_action_on_item` instead.
+
+  .. automethod:: user_view_item
+
+    .. deprecated:: 0.5.0
+      Use :func:`record_action_on_item` instead.
+
+  |
+
+  .. _async-methods-label:
+
+  .. note:: The following is non-blocking (asynchronous) request methods
+
+  .. automethod:: acreate_user
+  .. automethod:: aget_user
+  .. automethod:: adelete_user
+
+  .. automethod:: acreate_item
+  .. automethod:: aget_item
+  .. automethod:: adelete_item
+
+  .. automethod:: arecord_action_on_item
+
+    .. versionadded:: 0.5.0
+
+  .. automethod:: aget_itemrec_topn
+
+    .. versionadded:: 0.5.0
+
+    .. versionchanged:: 0.6.0
+      Change the order of parameters.
+
+  .. automethod:: aget_itemsim_topn
+
+    .. versionadded:: 0.6.0
+
+  .. automethod:: aget_itemrec
+
+    .. deprecated:: 0.5.0
+      Use :func:`aget_itemrec_topn` instead.
+
+  .. automethod:: auser_conversion_item
+
+    .. deprecated:: 0.5.0
+      Use :func:`arecord_action_on_item` instead.
+
+  .. automethod:: auser_dislike_item
+
+    .. deprecated:: 0.5.0
+      Use :func:`arecord_action_on_item` instead.
+
+  .. automethod:: auser_like_item
+
+    .. deprecated:: 0.5.0
+      Use :func:`arecord_action_on_item` instead.
+
+  .. automethod:: auser_rate_item
+
+    .. deprecated:: 0.5.0
+      Use :func:`arecord_action_on_item` instead.
+
+  .. automethod:: auser_view_item
+
+    .. deprecated:: 0.5.0
+      Use :func:`arecord_action_on_item` instead.
+
+  .. automethod:: aresp
 
 
