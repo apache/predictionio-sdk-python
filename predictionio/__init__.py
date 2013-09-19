@@ -218,8 +218,7 @@ class Client:
             object as argument to get the final result or status of this asynchronous request.
         """
         
-        enc_uid = urllib.quote(uid,"") # replace special char with %xx
-        path = "%s/users/%s.json" % (self.apiversion, enc_uid)
+        path = "%s/users/%s.json" % (self.apiversion, uid)
         request = AsyncRequest("GET", path, pio_appkey=self.appkey)
         request.set_rfunc(self._aget_user_resp)
         self._connection.make_request(request)
@@ -258,8 +257,7 @@ class Client:
             object as argument to get the final result or status of this asynchronous request.
         """
         
-        enc_uid = urllib.quote(uid,"") # replace special char with %xx
-        path = "%s/users/%s.json" % (self.apiversion, enc_uid)
+        path = "%s/users/%s.json" % (self.apiversion, uid)
         request = AsyncRequest("DELETE", path, pio_appkey=self.appkey)
         request.set_rfunc(self._adelete_user_resp)
         self._connection.make_request(request)
@@ -341,8 +339,7 @@ class Client:
             AsyncRequest object. You should call the aresp() method using this AsyncRequest
             object as argument to get the final result or status of this asynchronous request.
         """
-        enc_iid = urllib.quote(iid, "")
-        path = "%s/items/%s.json" % (self.apiversion, enc_iid)
+        path = "%s/items/%s.json" % (self.apiversion, iid)
         request = AsyncRequest("GET", path, pio_appkey=self.appkey)
         request.set_rfunc(self._aget_item_resp)
         self._connection.make_request(request)
@@ -383,8 +380,7 @@ class Client:
             object as argument to get the final result or status of this asynchronous request.
         """
         
-        enc_iid = urllib.quote(iid, "")
-        path = "%s/items/%s.json" % (self.apiversion, enc_iid)
+        path = "%s/items/%s.json" % (self.apiversion, iid)
         request = AsyncRequest("DELETE", path, pio_appkey=self.appkey)
         request.set_rfunc(self._adelete_item_resp)
         self._connection.make_request(request)
@@ -428,9 +424,8 @@ class Client:
         if "pio_attributes" in params:
             params["pio_attributes"] = ",".join(params["pio_attributes"])
 
-        enc_uid = urllib.quote(uid,"") # replace special char with %xx
         path = "%s/engines/itemrec/%s/topn.json" % (self.apiversion, engine)
-        request = AsyncRequest("GET", path, pio_appkey=self.appkey, pio_uid=enc_uid, pio_n=n, **params)
+        request = AsyncRequest("GET", path, pio_appkey=self.appkey, pio_uid=uid, pio_n=n, **params)
         request.set_rfunc(self._aget_user_itemrec_topn_resp)
         self._connection.make_request(request)
         return request
@@ -508,9 +503,8 @@ class Client:
         if "pio_attributes" in params:
             params["pio_attributes"] = ",".join(params["pio_attributes"])
 
-        enc_iid = urllib.quote(iid,"") # replace special char with %xx
         path = "%s/engines/itemsim/%s/topn.json" % (self.apiversion, engine)
-        request = AsyncRequest("GET", path, pio_appkey=self.appkey, pio_iid=enc_iid, pio_n=n, **params)
+        request = AsyncRequest("GET", path, pio_appkey=self.appkey, pio_iid=iid, pio_n=n, **params)
         request.set_rfunc(self._aget_itemsim_topn_resp)
         self._connection.make_request(request)
         return request
