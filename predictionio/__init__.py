@@ -9,7 +9,7 @@ __email__ = "help@tappingstone.com"
 __copyright__ = "Copyright 2013, TappingStone, Inc."
 __license__ = "Apache License, Version 2.0"
 
-__version__ = "0.6.0"
+__version__ = "0.6.1"
 
 
 # import packages
@@ -217,8 +217,9 @@ class Client:
             AsyncRequest object. You should call the aresp() method using this AsyncRequest
             object as argument to get the final result or status of this asynchronous request.
         """
-        
-        path = "%s/users/%s.json" % (self.apiversion, uid)
+
+        enc_uid = urllib.quote(uid,"") # replace special char with %xx
+        path = "%s/users/%s.json" % (self.apiversion, enc_uid)
         request = AsyncRequest("GET", path, pio_appkey=self.appkey)
         request.set_rfunc(self._aget_user_resp)
         self._connection.make_request(request)
@@ -257,7 +258,8 @@ class Client:
             object as argument to get the final result or status of this asynchronous request.
         """
         
-        path = "%s/users/%s.json" % (self.apiversion, uid)
+        enc_uid = urllib.quote(uid,"") # replace special char with %xx
+        path = "%s/users/%s.json" % (self.apiversion, enc_uid)
         request = AsyncRequest("DELETE", path, pio_appkey=self.appkey)
         request.set_rfunc(self._adelete_user_resp)
         self._connection.make_request(request)
@@ -339,7 +341,8 @@ class Client:
             AsyncRequest object. You should call the aresp() method using this AsyncRequest
             object as argument to get the final result or status of this asynchronous request.
         """
-        path = "%s/items/%s.json" % (self.apiversion, iid)
+        enc_iid = urllib.quote(iid, "")
+        path = "%s/items/%s.json" % (self.apiversion, enc_iid)
         request = AsyncRequest("GET", path, pio_appkey=self.appkey)
         request.set_rfunc(self._aget_item_resp)
         self._connection.make_request(request)
@@ -380,7 +383,8 @@ class Client:
             object as argument to get the final result or status of this asynchronous request.
         """
         
-        path = "%s/items/%s.json" % (self.apiversion, iid)
+        enc_iid = urllib.quote(iid, "")
+        path = "%s/items/%s.json" % (self.apiversion, enc_iid)
         request = AsyncRequest("DELETE", path, pio_appkey=self.appkey)
         request.set_rfunc(self._adelete_item_resp)
         self._connection.make_request(request)
