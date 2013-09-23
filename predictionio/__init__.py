@@ -9,7 +9,7 @@ __email__ = "help@tappingstone.com"
 __copyright__ = "Copyright 2013, TappingStone, Inc."
 __license__ = "Apache License, Version 2.0"
 
-__version__ = "0.6.0"
+__version__ = "0.6.1"
 
 
 # import packages
@@ -127,6 +127,14 @@ class Client:
         """
         self._connection.close()
 
+    def pending_requests(self):
+        """Return the number of pending requests.
+
+        :returns:
+            The number of pending requests of this client.
+        """
+        return self._connection.pending_requests()
+
     def identify(self, uid):
         """Identify the uid
 
@@ -217,7 +225,7 @@ class Client:
             AsyncRequest object. You should call the aresp() method using this AsyncRequest
             object as argument to get the final result or status of this asynchronous request.
         """
-        
+
         enc_uid = urllib.quote(uid,"") # replace special char with %xx
         path = "%s/users/%s.json" % (self.apiversion, enc_uid)
         request = AsyncRequest("GET", path, pio_appkey=self.appkey)
@@ -428,9 +436,8 @@ class Client:
         if "pio_attributes" in params:
             params["pio_attributes"] = ",".join(params["pio_attributes"])
 
-        enc_uid = urllib.quote(uid,"") # replace special char with %xx
         path = "%s/engines/itemrec/%s/topn.json" % (self.apiversion, engine)
-        request = AsyncRequest("GET", path, pio_appkey=self.appkey, pio_uid=enc_uid, pio_n=n, **params)
+        request = AsyncRequest("GET", path, pio_appkey=self.appkey, pio_uid=uid, pio_n=n, **params)
         request.set_rfunc(self._aget_user_itemrec_topn_resp)
         self._connection.make_request(request)
         return request
@@ -508,9 +515,8 @@ class Client:
         if "pio_attributes" in params:
             params["pio_attributes"] = ",".join(params["pio_attributes"])
 
-        enc_iid = urllib.quote(iid,"") # replace special char with %xx
         path = "%s/engines/itemsim/%s/topn.json" % (self.apiversion, engine)
-        request = AsyncRequest("GET", path, pio_appkey=self.appkey, pio_iid=enc_iid, pio_n=n, **params)
+        request = AsyncRequest("GET", path, pio_appkey=self.appkey, pio_iid=iid, pio_n=n, **params)
         request.set_rfunc(self._aget_itemsim_topn_resp)
         self._connection.make_request(request)
         return request
