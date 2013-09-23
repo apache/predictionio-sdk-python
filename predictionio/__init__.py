@@ -127,6 +127,14 @@ class Client:
         """
         self._connection.close()
 
+    def pending_requests(self):
+        """Return the number of pending requests.
+
+        :returns:
+            The number of pending requests of this client.
+        """
+        return self._connection.pending_requests()
+
     def identify(self, uid):
         """Identify the uid
 

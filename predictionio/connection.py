@@ -296,6 +296,11 @@ class Connection:
         """
         self.q.put(request)
     
+    def pending_requests(self):
+        """number of pending requests in the queue
+        """
+        return self.q.qsize()
+
     def close(self):
         """close this Connection. Call this when main program exits
         """

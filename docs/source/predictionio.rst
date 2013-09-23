@@ -190,6 +190,10 @@ predictionio.Client Class
 
     .. versionadded:: 0.5.0
 
+  .. automethod:: pending_requests
+
+    .. versionadded:: 0.6.1
+    
   |
 
   .. _sync-methods-label:

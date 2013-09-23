@@ -207,6 +207,22 @@ class TestPredictionIO(unittest.TestCase):
         client.close()
 
 
+    def test_pending_requests(self):
+        client = predictionio.Client(APP_KEY, 1, API_URL)
+
+        client.identify("u111")
+        for i in range(100):
+            client.arecord_action_on_item("like", str(i))
+        
+        n = 1
+        while n > 0:
+            n = client.pending_requests()
+            time.sleep(0.1)
+            print n
+
+        client.close()
+
+
 
 """
 to run individual test:
