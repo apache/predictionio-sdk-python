@@ -9,7 +9,7 @@ __email__ = "help@tappingstone.com"
 __copyright__ = "Copyright 2013, TappingStone, Inc."
 __license__ = "Apache License, Version 2.0"
 
-__version__ = "0.6.1"
+__version__ = "0.6.2"
 
 
 # import packages
@@ -90,19 +90,21 @@ class Client:
 
 
     """
-    def __init__(self, appkey, threads=1, apiurl="http://localhost:8000", apiversion = ""):
+    def __init__(self, appkey, threads=1, apiurl="http://localhost:8000", apiversion = "", qsize=0):
         """Constructor of Client object.
 
         :param appkey: the appkey
         :param threads: number of threads for handling requests
         :param apiurl: the PredictionIO API URL path.
         :param apiversion: the PredictionIO API version. (optional) (eg. "", or "/v1")
+        :param qsize: the request queue size
 
         """
         self.appkey = appkey
         self.threads = threads
         self.apiurl = apiurl
         self.apiversion = apiversion
+        self.qsize = qsize
 
         # check connection type
         https_pattern = r'^https://(.*)'
@@ -117,7 +119,7 @@ class Client:
         self.host = m.group(1)
 
         self._uid = None # identified uid
-        self._connection = Connection(host=self.host, threads=self.threads, https=self.https)
+        self._connection = Connection(host=self.host, threads=self.threads, qsize=self.qsize, https=self.https)
 
     def close(self):
         """Close this client and the connection.
