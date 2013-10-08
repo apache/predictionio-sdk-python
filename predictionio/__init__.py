@@ -87,17 +87,13 @@ class Client:
     :param threads: number of threads to handle PredictionIO API requests. Must be >= 1.
     :param apiurl: the PredictionIO API URL path.
     :param apiversion: the PredictionIO API version. (optional) (eg. "", or "/v1")
-
+    :param qsize: the max size of the request queue (optional).
+            The asynchronous request becomes blocking once this size has been reached, until the queued requests are handled. 
+            Default value is 0, which means infinite queue size.
 
     """
     def __init__(self, appkey, threads=1, apiurl="http://localhost:8000", apiversion = "", qsize=0):
         """Constructor of Client object.
-
-        :param appkey: the appkey
-        :param threads: number of threads for handling requests
-        :param apiurl: the PredictionIO API URL path.
-        :param apiversion: the PredictionIO API version. (optional) (eg. "", or "/v1")
-        :param qsize: the request queue size
 
         """
         self.appkey = appkey
