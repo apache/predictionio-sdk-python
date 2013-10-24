@@ -9,7 +9,7 @@ setup(name='PredictionIO',
       author=__author__,
       author_email=__email__,
       packages=['predictionio'],
-      url = 'http://prediction.io',
+      url='http://prediction.io',
       license='LICENSE.txt',
       description='PredictionIO Python SDK',
       classifiers=['Programming Language :: Python',
@@ -44,4 +44,4 @@ setup(name='PredictionIO',
                        PredictionIO API to Python programmers so that they
                        can focus on their application logic.
                        """
-)
+      )
