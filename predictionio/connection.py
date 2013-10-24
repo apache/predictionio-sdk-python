@@ -6,6 +6,11 @@ import urllib
 import datetime
 import logging
 
+# use generators for python2 and python3
+try:
+    xrange
+except NameError:
+    xrange = range
 
 # some constants
 MAX_RETRY = 1  # 0 means no retry
@@ -185,7 +190,7 @@ class PredictionIOHttpConnection():
             logger.debug("Request m:%s u:%s h:%s b:%s", method, url,
                          mod_headers, enc_body)
         # retry loop
-        for i in range(retry_limit + 1):
+        for i in xrange(retry_limit + 1):
             try:
                 if i != 0:
                     if DEBUG_LOG:
@@ -305,7 +310,7 @@ class Connection:
         # start thread based on threads number
         self.tid = {}  # dictionary of thread object
 
-        for i in range(threads):
+        for i in xrange(threads):
             tname = "PredictionIOThread-%s" % i  # thread name
             self.tid[i] = threading.Thread(
                 target=connection_worker, name=tname,
@@ -327,10 +332,10 @@ class Connection:
         """close this Connection. Call this when main program exits
         """
         # set kill message to q
-        for i in range(self.threads):
+        for i in xrange(self.threads):
             self.make_request(AsyncRequest("KILL", ""))
 
         self.q.join()  # wait for q empty
 
-        for i in range(self.threads):  # wait for all thread finish
+        for i in xrange(self.threads):  # wait for all thread finish
             self.tid[i].join()
