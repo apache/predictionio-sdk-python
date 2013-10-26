@@ -50,7 +50,7 @@ class ProgramError(PredictionIOAPIError):
     pass
 
 
-class AsyncRequest:
+class AsyncRequest(object):
 
     """AsyncRequest object
 
@@ -93,7 +93,7 @@ class AsyncRequest:
         return self._response
 
 
-class AsyncResponse:
+class AsyncResponse(object):
 
     """AsyncResponse object.
 
@@ -142,7 +142,7 @@ class AsyncResponse:
         self.request = request
 
 
-class PredictionIOHttpConnection():
+class PredictionIOHttpConnection(object):
 
     def __init__(self, host, https=True):
         if https:  # https connection
@@ -287,7 +287,7 @@ def connection_worker(host, request_queue, https=True, loop=True):
     connect.close()
 
 
-class Connection:
+class Connection(object):
 
     """abstract object for connection with server
 
