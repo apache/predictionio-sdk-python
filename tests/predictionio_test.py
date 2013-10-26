@@ -6,7 +6,10 @@ import unittest
 import threading
 import time
 
-import httplib
+try:
+    import httplib
+except ImportError:
+    from http import client as httplib
 import urllib
 
 APP_KEY = "GToKwk78As0LBp2fAx2YNUBPZFZvtwy6MJkGwRASiD6Q77JjBnTaXBxzBTd52ICE" # replace this with your AppKey
@@ -17,7 +20,7 @@ if predictionio.__version__ < MIN_VERSION:
     err = "Require PredictionIO Python SDK version >= %s" % MIN_VERSION
     raise Exception(err)
 
-print predictionio.__version__
+#print predictionio.__version__
 #predictionio.connection.enable_log()
 
 class TestPredictionIO(unittest.TestCase):
@@ -81,7 +84,7 @@ class TestPredictionIO(unittest.TestCase):
         # read, modify, write
         user3 = client.get_user(uid3)
         self.assertEqual(user3, {"pio_uid" : uid3, "pio_latlng" : [4.5,67.8], "pio_inactive" : True})
-        del user3["pio_uid"] 
+        del user3["pio_uid"]
         user3["pio_latlng"] = [5.6,10.11]
         user3["pio_inactive"] = False
         user3["custom1"] = "food"
@@ -125,7 +128,7 @@ class TestPredictionIO(unittest.TestCase):
         item3 = client.get_item(iid3)
         item4 = client.get_item(iid4)
         item5 = client.get_item(iid5)
-        
+
         del item1["pio_startT"] # pio_startT is automatically inserted, don't compare
         self.assertEqual(item1, {"pio_iid": iid1, "pio_itypes": ("t1", "t2", "t3") } )
         del item2["pio_startT"]
@@ -149,7 +152,7 @@ class TestPredictionIO(unittest.TestCase):
         # others still exist
         item3 = client.get_item(iid3)
         self.assertEqual(item3, {"pio_iid": iid3, "pio_itypes": ("t2",), "pio_price": 4.99, "pio_profit": 2.0, "pio_startT": 12345667, "pio_endT": 4567788, "pio_latlng": [1.345, 9.876], "pio_inactive": True } )
-        
+
         # read, modify, write
         del item3["pio_iid"]
         item3_itypes = item3.pop("pio_itypes")
@@ -158,7 +161,7 @@ class TestPredictionIO(unittest.TestCase):
         client.create_item(iid3, item3_itypes, item3)
         updated_item3 = client.get_item(iid3)
         self.assertEqual(updated_item3, {"pio_iid": iid3, "pio_itypes": ("t2",), "pio_price": 6.99, "pio_profit": 2.0, "pio_startT": 12345667, "pio_endT": 4567788, "pio_latlng": [1.345, 9.876], "pio_inactive": True, "custom1": "some value" } )
-        
+
         client.close()
 
     def test_item(self):
@@ -213,12 +216,12 @@ class TestPredictionIO(unittest.TestCase):
         client.identify("u111")
         for i in range(100):
             client.arecord_action_on_item("like", str(i))
-        
+
         n = 1
         while n > 0:
             n = client.pending_requests()
             time.sleep(0.1)
-            print n
+            #print n
 
         client.close()
 
@@ -233,7 +236,7 @@ class TestPredictionIO(unittest.TestCase):
         while n > 0:
             n = client.pending_requests()
             time.sleep(0.1)
-            print n
+            #print n
 
         client.close()
 

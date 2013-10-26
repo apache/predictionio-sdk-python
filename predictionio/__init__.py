@@ -14,7 +14,10 @@ __version__ = "0.6.2"
 
 # import packages
 import re
-import httplib
+try:
+    import httplib
+except ImportError:
+    from http import client as httplib
 import json
 import urllib
 
