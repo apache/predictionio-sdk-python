@@ -104,7 +104,7 @@ CONVERSION_API = "conversion"
 RATE_API = "rate"
 
 
-class Client:
+class Client(object):
 
     """PredictionIO client object.
 
