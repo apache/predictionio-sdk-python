@@ -1,7 +1,20 @@
 
-import Queue
+try:
+    import Queue
+except ImportError:
+    import queue as Queue
 import threading
-import httplib
+
+try:
+    import httplib
+except ImportError:
+    from http import client as httplib
+
+try:
+    from urllib import urlencode
+except ImportError:
+    from urllib.parse import urlencode
+
 import urllib
 import datetime
 import logging
@@ -64,7 +77,7 @@ class AsyncRequest:
         self.params = params
         # use queue to implement response, store AsyncResponse object
         self.response_q = Queue.Queue(1)
-        self.qpath = "%s?%s" % (self.path, urllib.urlencode(self.params))
+        self.qpath = "%s?%s" % (self.path, urlencode(self.params))
         self._response = None
         # response function to be called to handle the response
         self.rfunc = None
@@ -178,7 +191,7 @@ class PredictionIOHttpConnection():
             mod_headers["Connection"] = "keep-alive"
             enc_body = None
             if body:  # if body is not empty
-                enc_body = urllib.urlencode(body)
+                enc_body = urlencode(body)
                 mod_headers[
                     "Content-type"] = "application/x-www-form-urlencoded"
                 #mod_headers["Accept"] = "text/plain"
