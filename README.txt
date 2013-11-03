@@ -1,8 +1,9 @@
 PredictionIO Python SDK
 =======================
 
-Install
---------
+
+Installation
+============
 
 To install the module from PyPI, you may
 
@@ -19,15 +20,17 @@ do the following in the root directory of the repository:
 
 This will install the "predictionio" module to your Python distribution.
 
+
 Usage
------
+=====
 
 To use predictionio in your Python script,
 
     >>> import predictionio
 
+
 Documentation
--------------
+=============
 
 The latest documentation is located at http://pythonhosted.org/PredictionIO/
 
@@ -41,10 +44,20 @@ To generate documentation,
 
 To view the generated documentation, go to docs/build/html/index.html.
 
+
 SUPPORT
 =======
+
 
 Forum
 -----
 
 https://groups.google.com/group/predictionio-user
+
+
+Issue Tracker
+-------------
+
+https://predictionio.atlassian.net
+
+If you are unsure whether a behavior is an issue, bringing it up in the forum is highly encouraged.
