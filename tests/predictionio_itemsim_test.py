@@ -3,11 +3,7 @@ Test getting itemsim after algo training completes (pdio-itemsimcf with cosine s
 """
 import predictionio
 import unittest
-import threading
 import time
-
-import httplib
-import urllib
 
 APP_KEY = "y2Fk4BACEGYeJnqBF4zL9TmrIBdF9va3gyFaLsnM7PVyUNf0G00zC8vCnyBx5hdA" # replace this with your AppKey
 API_URL = "http://localhost:8000" # PredictoinIO Server

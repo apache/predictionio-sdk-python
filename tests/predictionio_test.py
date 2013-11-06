@@ -3,14 +3,7 @@ Test Python SDK
 """
 import predictionio
 import unittest
-import threading
 import time
-
-try:
-    import httplib
-except ImportError:
-    from http import client as httplib
-import urllib
 
 APP_KEY = "GToKwk78As0LBp2fAx2YNUBPZFZvtwy6MJkGwRASiD6Q77JjBnTaXBxzBTd52ICE" # replace this with your AppKey
 API_URL = "http://localhost:8000" # PredictoinIO Server

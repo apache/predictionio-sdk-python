@@ -3,11 +3,7 @@ Test getting itemrec after algo training completes.
 """
 import predictionio
 import unittest
-import threading
 import time
-
-import httplib
-import urllib
 
 APP_KEY = "GToKwk78As0LBp2fAx2YNUBPZFZvtwy6MJkGwRASiD6Q77JjBnTaXBxzBTd52ICE" # replace this with your AppKey
 API_URL = "http://localhost:8000" # PredictoinIO Server
