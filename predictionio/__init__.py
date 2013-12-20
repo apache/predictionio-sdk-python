@@ -9,7 +9,7 @@ __email__ = "help@tappingstone.com"
 __copyright__ = "Copyright 2013, TappingStone, Inc."
 __license__ = "Apache License, Version 2.0"
 
-__version__ = "0.6.2"
+__version__ = "0.6.3"
 
 
 # import packages
@@ -121,11 +121,13 @@ class Client(object):
             The asynchronous request becomes blocking once this size has been
             reached, until the queued requests are handled.
             Default value is 0, which means infinite queue size.
+    :param timeout: timeout for HTTP connection attempts and requests in seconds (optional).
+            default value is 5.
 
     """
 
     def __init__(self, appkey, threads=1, apiurl="http://localhost:8000",
-                 apiversion="", qsize=0):
+                 apiversion="", qsize=0, timeout=5):
         """Constructor of Client object.
 
         """
@@ -134,6 +136,7 @@ class Client(object):
         self.apiurl = apiurl
         self.apiversion = apiversion
         self.qsize = qsize
+        self.timeout = timeout
 
         # check connection type
         https_pattern = r'^https://(.*)'
@@ -149,7 +152,8 @@ class Client(object):
 
         self._uid = None  # identified uid
         self._connection = Connection(host=self.host, threads=self.threads,
-                                      qsize=self.qsize, https=self.https)
+                                      qsize=self.qsize, https=self.https,
+                                      timeout=self.timeout)
 
     def close(self):
         """Close this client and the connection.

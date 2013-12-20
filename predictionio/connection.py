@@ -157,11 +157,11 @@ class AsyncResponse(object):
 
 class PredictionIOHttpConnection(object):
 
-    def __init__(self, host, https=True):
+    def __init__(self, host, https=True, timeout=5):
         if https:  # https connection
-            self._connection = httplib.HTTPSConnection(host)
+            self._connection = httplib.HTTPSConnection(host, timeout=timeout)
         else:
-            self._connection = httplib.HTTPConnection(host)
+            self._connection = httplib.HTTPConnection(host, timeout=timeout)
 
     def connect(self):
         self._connection.connect()
@@ -245,7 +245,7 @@ class PredictionIOHttpConnection(object):
         return response  # AsyncResponse object
 
 
-def connection_worker(host, request_queue, https=True, loop=True):
+def connection_worker(host, request_queue, https=True, timeout=5, loop=True):
     """worker function which establishes connection and wait for request jobs
     from the request_queue
 
@@ -257,11 +257,12 @@ def connection_worker(host, request_queue, https=True, loop=True):
                 DELETE
                 KILL
         https: HTTPS (True) or HTTP (False)
+        timeout: timeout for HTTP connection attempts and requests in seconds
         loop: This worker function stays in a loop waiting for request
             For testing purpose only. should always be set to True.
     """
 
-    connect = PredictionIOHttpConnection(host, https)
+    connect = PredictionIOHttpConnection(host, https, timeout)
 
     # loop waiting for job form request queue
     killed = not loop
@@ -307,7 +308,7 @@ class Connection(object):
     spawn multiple connection_worker threads to handle jobs in the queue q
     """
 
-    def __init__(self, host, threads=1, qsize=0, https=True):
+    def __init__(self, host, threads=1, qsize=0, https=True, timeout=5):
         """constructor
 
         Args:
@@ -315,11 +316,13 @@ class Connection(object):
             threads: type int, number of threads to be spawn
             qsize: size of the queue q
             https: indicate it is httpS (True) or http connection (False)
+            timeout: timeout for HTTP connection attempts and requests in seconds
         """
         self.host = host
         self.https = https
         self.q = Queue.Queue(qsize)  # if qsize=0, means infinite
         self.threads = threads
+        self.timeout = timeout
         # start thread based on threads number
         self.tid = {}  # dictionary of thread object
 
@@ -327,7 +330,7 @@ class Connection(object):
             tname = "PredictionIOThread-%s" % i  # thread name
             self.tid[i] = threading.Thread(
                 target=connection_worker, name=tname,
-                args=(self.host, self.q, self.https))
+                kwargs={'host':self.host, 'request_queue':self.q, 'https':self.https, 'timeout':self.timeout})
             self.tid[i].setDaemon(True)
             self.tid[i].start()
 
