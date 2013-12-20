@@ -316,7 +316,8 @@ class Connection(object):
             threads: type int, number of threads to be spawn
             qsize: size of the queue q
             https: indicate it is httpS (True) or http connection (False)
-            timeout: timeout for HTTP connection attempts and requests in seconds
+            timeout: timeout for HTTP connection attempts and requests in
+                seconds
         """
         self.host = host
         self.https = https
@@ -330,7 +331,8 @@ class Connection(object):
             tname = "PredictionIOThread-%s" % i  # thread name
             self.tid[i] = threading.Thread(
                 target=connection_worker, name=tname,
-                kwargs={'host':self.host, 'request_queue':self.q, 'https':self.https, 'timeout':self.timeout})
+                kwargs={'host':self.host, 'request_queue':self.q, 
+                        'https':self.https, 'timeout':self.timeout})
             self.tid[i].setDaemon(True)
             self.tid[i].start()
 

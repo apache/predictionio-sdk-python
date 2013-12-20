@@ -121,8 +121,9 @@ class Client(object):
             The asynchronous request becomes blocking once this size has been
             reached, until the queued requests are handled.
             Default value is 0, which means infinite queue size.
-    :param timeout: timeout for HTTP connection attempts and requests in seconds (optional).
-            default value is 5.
+    :param timeout: timeout for HTTP connection attempts and requests in
+        seconds (optional).
+        Default value is 5.
 
     """
 
@@ -213,8 +214,9 @@ class Client(object):
 
         :param uid: user id. type str.
         :param params: optional attributes. type dictionary.
-                For example, { 'custom': 'value', 'pio_inactive' : True,
-                               'pio_latlng': [4.5,67.8] }
+                For example, 
+                { 'custom': 'value', 'pio_inactive' : True,
+                'pio_latlng': [4.5,67.8] }
 
         :returns:
             AsyncRequest object. You should call the aresp() method using this
@@ -351,10 +353,11 @@ class Client(object):
                 For example, if this item belongs to item types "t1", "t2",
                 "t3", "t4",then itypes=("t1", "t2", "t3", "t4").
                 NOTE: if this item belongs to only one itype, use tuple of one
-                      element, eg. itypes=("t1",)
+                element, eg. itypes=("t1",)
         :param params: optional attributes. type dictionary.
-                For example, { 'custom': 'value', 'pio_inactive' : True,
-                               'pio_latlng': [4.5,67.8] }
+                For example, 
+                { 'custom': 'value', 'pio_inactive' : True, 
+                'pio_latlng': [4.5,67.8] }
         :returns:
             AsyncRequest object. You should call the aresp() method using this
             AsyncRequest object as argument to get the final result or status
@@ -695,8 +698,8 @@ class Client(object):
         :param params: optional attributes. type dictionary.
                 For example, { 'pio_rate' : 4, 'pio_latlng': [4.5,67.8] }
                 NOTE: For "rate" action, pio_rate attribute is required.
-                      integer value of 1-5 (1 is least preferred and 5 is most
-                      preferred)
+                integer value of 1-5 (1 is least preferred and 5 is most
+                preferred)
 
         :returns:
             AsyncRequest object. You should call the aresp() method using this
@@ -838,8 +841,8 @@ class Client(object):
 
         :param uid: user id. type str.
         :param params: optional attributes. type dictionary.
-                For example, { 'custom': 'value', 'pio_inactive' : True,
-                               'pio_latlng': [4.5,67.8] }
+            For example, { 'custom': 'value', 'pio_inactive' : True,
+            'pio_latlng': [4.5,67.8] }
 
         :returns:
             None.
@@ -892,10 +895,11 @@ class Client(object):
                 For example, if this item belongs to item types "t1", "t2",
                 "t3", "t4", then itypes=("t1", "t2", "t3", "t4").
                 NOTE: if this item belongs to only one itype, use tuple of one
-                      element, eg. itypes=("t1",)
+                element, eg. itypes=("t1",)
         :param params: optional attributes. type dictionary.
-                For example, { 'custom': 'value', 'pio_inactive' : True,
-                               'pio_latlng': [4.5,67.8] }
+                For example, 
+                { 'custom': 'value', 'pio_inactive' : True,
+                'pio_latlng': [4.5,67.8] }
 
         :returns:
             None
@@ -1005,8 +1009,8 @@ class Client(object):
         :param params: optional attributes. type dictionary.
                 For example, { 'pio_rate' : 4, 'pio_latlng' : [1.23,4.56] }
                 NOTE: For "rate" action, pio_rate attribute is required.
-                      integer value of 1-5 (1 is least preferred and 5 is most
-                      preferred)
+                integer value of 1-5 (1 is least preferred and 5 is most
+                preferred)
 
         :returns:
             None
