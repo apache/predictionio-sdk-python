@@ -11,4 +11,5 @@ Step 1. Get sample data and unzip it.
 Step 2. Configurate examples/itemrec/movies/appdata.py
 
 Step 3. Run this app:
+
     > python -m examples.itemrec.movies.movie_rec_app
