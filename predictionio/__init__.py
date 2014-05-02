@@ -9,7 +9,7 @@ __email__ = "help@tappingstone.com"
 __copyright__ = "Copyright 2014, TappingStone, Inc."
 __license__ = "Apache License, Version 2.0"
 
-__version__ = "0.6.3"
+__version__ = "0.7.0"
 
 
 # import packages
@@ -92,6 +92,10 @@ class ItemSimNotFoundError(PredictionIOAPIError):
   "Error happened when tried to get similar items"
   pass
 
+class ItemRankNotFoundError(PredictionIOAPIError):
+
+  "Error happened when treid to rank item"
+  pass
 
 class InvalidArgumentError(PredictionIOAPIError):
 
@@ -640,6 +644,79 @@ class Client(object):
     request = self._aget_itemsim_topn(engine, iid, n, params)
     return request
 
+  def _aget_user_itemrank_ranked(self, engine, uid, iids, params={}):
+    """Private function to asynchronously get ranked item for user
+
+    :param engine: name of the prediction engine. type str.
+    :param uid: user id. type str.
+    :param iids: items to be ranked. type list of item ids.
+      For example, ["i0", "i1", "i2"]
+    :param params: optional parameters. type dictionary
+      For example. { 'pio_attributes' : "name" }
+    :returns:
+      AsyncRequest object. You should call the aresp() method using this
+      AsyncRequest object as argument to get the final result or status
+      of this asynchronous request.
+    """
+    if "pio_attributes" in params:
+      params["pio_attributes"] = ",".join(params["pio_attributes"])
+
+    pio_iids = ",".join(iids)
+
+    path = "%s/engines/itemrank/%s/ranked.json" % \
+      (self.apiversion, engine)
+    request = AsyncRequest("GET", path, pio_appkey=self.appkey,
+                           pio_uid=uid, pio_iids=pio_iids, **params)
+    request.set_rfunc(self._aget_user_itemrank_ranked_resp)
+    self._connection.make_request(request)
+    return request
+
+  def _aget_user_itemrank_ranked_resp(self, response):
+    """Private function to handle the AsyncResponse of the aget_itemreoder
+      request
+
+    :param response: AsyncResponse object
+
+    :returns:
+      data in dictionary format.
+
+    :raises:
+      ItemRankNotFoundError.
+    """
+    if response.error is not None:
+      raise ItemRankNotFoundError(
+        "Exception happened: %s for request %s" %
+        (response.error, response.request))
+    elif response.status != httplib.OK:
+      raise ItemRankNotFoundError("request: %s status: %s body: %s" %
+                                  (response.request, response.status,
+                                   response.body))
+
+    data = json.loads(response.body)  # convert json string to dict
+    return data
+
+  def aget_itemrank_ranked(self, engine, iids, params={}):
+    """Asynchronously get ranked item for user
+
+    :param engine: name of the prediction engine. type str.
+    :param iids: items to be ranked. type list of item ids.
+      For example, ["i0", "i1", "i2"]
+    :param params: optional parameters. type dictionary
+      For example. { 'pio_attributes' : "name" }
+    :returns:
+      AsyncRequest object. You should call the aresp() method using this
+      AsyncRequest object as argument to get the final result or status
+      of this asynchronous request.
+    """
+
+    if self._uid is None:
+      raise InvalidArgumentError(
+        "uid is not identified. Please call identify(uid) first.")
+
+    request = self._aget_user_itemrank_ranked(engine,
+      self._uid, iids, params)
+    return request
+
   def _auser_action_on_item(self, action, uid, iid, params):
     """Private function to asynchronously create an user action on an item
 
@@ -999,6 +1076,24 @@ class Client(object):
     """
 
     request = self.aget_itemsim_topn(engine, iid, n, params)
+    result = self.aresp(request)
+    return result
+
+  def get_itemrank_ranked(self, engine, iids, params={}):
+    """Blocking request to get ranked item for user
+
+    :param engine: name of the prediction engine. type str.
+    :param iids: items to be ranked. type list of item ids.
+        For example, ["i0", "i1", "i2"]
+    :param params: optional parameters. type dictionary
+        For example. { 'pio_attributes' : "name" }
+    :returns:
+      data in dictionary format.
+
+    :raises:
+      ItemRankNotFoundError.
+    """
+    request = self.aget_itemrank_ranked(engine, iids, params)
     result = self.aresp(request)
     return result
 
