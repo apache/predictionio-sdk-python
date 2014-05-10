@@ -79,6 +79,18 @@ Afterwards, you can import data or retrieve recommendations for your App by call
 
     >>> result = client.get_itemsim_topn("engine-2", "i200", 5)
 
+  To get top 5 similar items given a list of items i200,i300,i400 from the item similarity engine "engine-2"
+
+    >>> result = client.get_itemsim_topn("engine-2", "i200,i300,i400", 5)
+
+**Item Rank Engine**
+
+  To rank a list of items i100, i101, i102, i103 for user "u100" from the item rank engine "engine-3"
+
+    >>> client.identify("u100")
+    >>> result = client.get_itemrank_ranked("engine-3", ["i100","i101","i102", "i103"])
+
+
 Please refer to the documentation of the :class:`predictionio.Client` class for more details of all available methods.
 
 
@@ -193,7 +205,7 @@ predictionio.Client Class
   .. automethod:: pending_requests
 
     .. versionadded:: 0.6.1
-    
+
   |
 
   .. _sync-methods-label:
@@ -224,13 +236,17 @@ predictionio.Client Class
 
     .. versionadded:: 0.6.0
 
+  .. automethod:: get_itemrank_ranked
+
+    .. versionadded:: 0.7.0
+
   .. automethod:: get_itemrec
-  
+
     .. deprecated:: 0.5.0
       Use :func:`get_itemrec_topn` instead.
 
   .. automethod:: user_conversion_item
-      
+
     .. deprecated:: 0.5.0
       Use :func:`record_action_on_item` instead.
 
@@ -283,6 +299,10 @@ predictionio.Client Class
 
     .. versionadded:: 0.6.0
 
+  .. automethod:: aget_itemrank_ranked
+
+    .. versionadded:: 0.7.0
+
   .. automethod:: aget_itemrec
 
     .. deprecated:: 0.5.0
@@ -314,5 +334,3 @@ predictionio.Client Class
       Use :func:`arecord_action_on_item` instead.
 
   .. automethod:: aresp
-
-
