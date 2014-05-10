@@ -1,4 +1,2 @@
-
-APP_KEY = 'wWKeyokhpwEgis9BHCHkwqB7Hcop0OEF6KzkZWXfz2uMJYjl2QDwNlFVGl5hhHfy'
+APP_KEY = 'uJKTKyUAFNZYQQO5yxkdrSo3XIlaf9LXejI63CWE0mtZVEYF89hyVtOwpMKfXXXX'
 API_URL = 'http://localhost:8000'
-
