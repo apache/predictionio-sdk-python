@@ -20,6 +20,7 @@ except ImportError:
   from urllib.parse import urlencode
 
 import datetime
+import json
 import logging
 
 # use generators for python2 and python3
@@ -194,9 +195,12 @@ class PredictionIOHttpConnection(object):
       mod_headers["Connection"] = "keep-alive"
       enc_body = None
       if body:  # if body is not empty
-        enc_body = urlencode(body)
+        #enc_body = urlencode(body)
+        #mod_headers[
+        #  "Content-type"] = "application/x-www-form-urlencoded"
+        enc_body = json.dumps(body)
         mod_headers[
-          "Content-type"] = "application/x-www-form-urlencoded"
+          "Content-type"] = "application/json"
         #mod_headers["Accept"] = "text/plain"
     except Exception as e:
       response.set_error(e)
