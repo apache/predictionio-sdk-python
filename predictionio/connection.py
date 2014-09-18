@@ -105,7 +105,11 @@ class AsyncRequest(object):
 
     """
     if self._response is None:
-      self._response = self.response_q.get(True)  # NOTE: blocking
+      tmp_response = self.response_q.get(True)  # NOTE: blocking
+      if self.rfunc is None:
+        self._response = tmp_response
+      else:
+        self._response = self.rfunc(tmp_response)
 
     return self._response
 
@@ -151,6 +155,11 @@ class AsyncResponse(object):
     self.reason = reason
     self.headers = headers
     self.body = body
+    # Try to extract the json.
+    try:
+      self.json_body = json.loads(body)
+    except ValueError, ex:
+      self.json_body = None
 
   def set_error(self, error):
     self.error = error

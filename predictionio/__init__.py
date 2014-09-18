@@ -117,16 +117,25 @@ class BaseClient(object):
                   (response.request, response.status,
                    response.body))
 
-    data = json.loads(response.body)  # convert json string to dict
-    return data
+    return response.json_body
+
+  def _adelete_resp(self, response):
+    if response.error is not None:
+      raise NotFoundError("Exception happened: %s for request %s" %
+                  (response.error, response.request))
+    elif response.status != httplib.OK:
+      raise NotFoundError("request: %s status: %s body: %s" %
+                  (response.request, response.status,
+                   response.body))
+
+    return response.body
 
 
 class EventClient(BaseClient):
   """Client for importing data into PredictionIO Event Server."""
-  def __init__(self, app_id, data_url="http://localhost:7070",
+  def __init__(self, app_id, url="http://localhost:7070",
       threads=1, apiversion="", qsize=0, timeout=5):
-    super(DataClient, self).__init__(
-        data_url, threads, apiversion, qsize, timeout)
+    super(EventClient, self).__init__(url, threads, apiversion, qsize, timeout)
     self.app_id = app_id
 
   def acreate_event(self, data):
@@ -143,9 +152,23 @@ class EventClient(BaseClient):
     enc_event_id = urllib.quote(event_id, "") # replace special char with %xx
     path = "/events/%s.json" % enc_event_id
     request = AsyncRequest("GET", path)
-    requset.set_rfunc(self._aget_resp)
+    request.set_rfunc(self._aget_resp)
     self._connection.make_request(request)
     return request
+
+  def get_event(self, event_id):
+    return self.aget_event(event_id).get_response()
+
+  def adelete_event(self, event_id):
+    enc_event_id = urllib.quote(event_id, "") # replace special char with %xx
+    path = "/events/%s.json" % enc_event_id
+    request = AsyncRequest("DELETE", path)
+    request.set_rfunc(self._adelete_resp)
+    self._connection.make_request(request)
+    return request
+
+  def delete_event(self, event_id):
+    return self.adelete_event(event_id).get_response()
 
   def aset_user(self, uid, properties={}):
     """set properties of an user"""
