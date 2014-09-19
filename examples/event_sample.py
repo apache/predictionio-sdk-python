@@ -42,7 +42,6 @@ second_event_data = {
     "anotherProperty" : "value2"
   },
   "eventTime" : "2004-12-13T21:39:45.618Z",
-  "tags" : ["tag1", "tag2"],
   "creationTime" : "2014-09-01T21:40:45.123+01:00"
 }
 print("Second Event response")
