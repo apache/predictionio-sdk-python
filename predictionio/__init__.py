@@ -147,7 +147,6 @@ class EventClient(BaseClient):
     self.app_id = app_id
 
   def acreate_event(self, data):
-    print data
     path = "/events.json"
     request = AsyncRequest("POST", path, **data)
     request.set_rfunc(self._acreate_resp)
