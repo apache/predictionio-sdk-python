@@ -11,6 +11,8 @@ def import_itemrank(app_id):
   random.seed()
   
   client = predictionio.EventClient(app_id=app_id)
+
+  print client.get_status()
   
   # generate 10 users, with user ids 1,2,....,10
   user_ids = [str(i) for i in range(1, 11)]
