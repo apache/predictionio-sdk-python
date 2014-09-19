@@ -2,10 +2,9 @@
 from appdata import AppData
 import predictionio
 import sys
+import pytz
 
-from app_config import APP_ID, API_URL, THREADS, REQUEST_QSIZE
-
-def batch_import_task(app_data, client, all_info=False):
+def batch_import_task(app_id, app_data, client, all_info=False):
 
   print "[Info] Importing users to PredictionIO..."
   count = 0
@@ -55,11 +54,6 @@ def batch_import_task(app_data, client, all_info=False):
         sys.stdout.write('\r[Info] %s' % count)
         sys.stdout.flush()
 
-    #client.identify(v.uid)
-    #client.arecord_user_action_on_item("rate",
-    #  v.uid,
-    #  v.iid,
-    #   { "pio_rating": v.rating },)
     properties = { "pio_rating" : int(v.rating) }
     req = client.acreate_event({
       "event" : "rate",
@@ -68,10 +62,9 @@ def batch_import_task(app_data, client, all_info=False):
       "targetEntityType" : "pio_item",
       "targetEntityId": v.iid,
       "properties" : properties,
-      "appId" : APP_ID,
-      "eventTime" : v.t.isoformat() + 'Z'
+      "appId" : app_id,
+      "eventTime" : v.t.replace(tzinfo=pytz.utc).isoformat(),
     })
-    #print req.get_response()
 
   sys.stdout.write('\r[Info] %s rate actions were imported.\n' % count)
   sys.stdout.flush()
@@ -82,8 +75,10 @@ if __name__ == '__main__':
     sys.exit("Usage: python -m examples.demo-movielens.batch_import "
         "<app_id> <url>")
 
+  app_id = int(sys.argv[1])
+
   client = predictionio.EventClient(
-      app_id=int(sys.argv[1]),
+      app_id=app_id,
       url=sys.argv[2],
       threads=5,
       qsize=500)
@@ -92,5 +87,5 @@ if __name__ == '__main__':
   print "Status:", client.get_status()
   
   app_data = AppData()
-  batch_import_task(app_data, client)
+  batch_import_task(app_id, app_data, client)
   client.close()
