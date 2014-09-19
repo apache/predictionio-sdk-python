@@ -1,0 +1,4 @@
+APP_ID = 6
+API_URL = 'http://localhost:7070'
+THREADS = 25
+REQUEST_QSIZE = 500
