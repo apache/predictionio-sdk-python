@@ -70,7 +70,7 @@ except NotFoundError, ex:
   print("The expected error: {0}".format(ex))
 print
 
-# Use "user"-helper methods
+# "user"-helper methods
 
 # Set user properties implicitly create a user
 # This call creates a user "foo", and set the properties of "foo".
@@ -93,3 +93,35 @@ print(client.unset_user("foo", properties=foo_properties))
 # This call deletes a user
 print("Delete user")
 print(client.delete_user("foo"))
+
+# "item"-helper methods
+
+# Set item properties implicitly create a item
+# This call creates a item "bar", and set the properties of "bar".
+print("Create item bar")
+bar_properties = {"city": "santa clara", "weight": 6.9}
+print(client.set_item("bar", properties=bar_properties))
+
+# Similar to user-methods, we can do the same thing with item
+print("Set new properties")
+bar_properties = {"weight": 6.2}
+print(client.set_item("bar", properties=bar_properties))
+
+# This call removes the specified properties. It ignores the value of the dict.
+# After this call, the "city" will become an unset field.
+print("Unset properties")
+bar_properties = {"city": None}
+print(client.unset_item("bar", properties=bar_properties))
+
+# This call deletes a item
+print("Delete item")
+print(client.delete_item("bar"))
+
+
+# "record" action helper functions
+
+# This call creates a event between a user and an item. In particular, this set
+# the price of the action
+print("Record user action")
+action_properties = {"price": 10.0}
+print(client.record_user_action_on_item("buy", "foo", "bar", action_properties))

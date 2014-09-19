@@ -232,6 +232,18 @@ class EventClient(BaseClient):
   
   def unset_item(self, iid, properties={}):
     return self.aunset_item(iid, properties).get_response()
+  
+  def adelete_item(self, iid):
+    """set properties of an user"""
+    return self.acreate_event({
+      "event" : "$delete",
+      "entityType" : "pio_item",
+      "entityId" : iid,
+      "appId": self.app_id,
+    })
+  
+  def delete_item(self, iid):
+    return self.adelete_item(iid).get_response()
 
   def arecord_user_action_on_item(self, action, uid, iid, properties={}):
     return self.acreate_event({
