@@ -36,14 +36,12 @@ class NotFoundError(PredictionIOAPIError):
   pass
 
 class BaseClient(object):
-  def __init__(self, url, threads=1,
-         apiversion="", qsize=0, timeout=5):
+  def __init__(self, url, threads=1, qsize=0, timeout=5):
     """Constructor of Client object.
 
     """
     self.threads = threads
     self.url = url
-    self.apiversion = apiversion
     self.qsize = qsize
     self.timeout = timeout
 
@@ -134,8 +132,8 @@ class BaseClient(object):
 class EventClient(BaseClient):
   """Client for importing data into PredictionIO Event Server."""
   def __init__(self, app_id, url="http://localhost:7070",
-      threads=1, apiversion="", qsize=0, timeout=5):
-    super(EventClient, self).__init__(url, threads, apiversion, qsize, timeout)
+      threads=1, qsize=0, timeout=5):
+    super(EventClient, self).__init__(url, threads, qsize, timeout)
     self.app_id = app_id
 
   def acreate_event(self, data):
@@ -239,9 +237,8 @@ class EventClient(BaseClient):
 class PredictionClient(BaseClient):
   """Client for extracting prediction results from PredictionIO Engine."""
   def __init__(self, url="http://localhost:8000", threads=1,
-      apiversion="", qsize=0, timeout=5):
-    super(PredictionClient, self).__init__(
-        url, threads, apiversion, qsize, timeout)
+      qsize=0, timeout=5):
+    super(PredictionClient, self).__init__(url, threads, qsize, timeout)
 
   def asend_query(self, data):
     path = "/"
