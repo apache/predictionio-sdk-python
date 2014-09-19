@@ -78,10 +78,19 @@ def batch_import_task(app_data, client, all_info=False):
 
 
 if __name__ == '__main__':
+  if len(sys.argv) < 3:
+    sys.exit("Usage: python -m examples.demo-movielens.batch_import "
+        "<app_id> <url>")
+
+  client = predictionio.EventClient(
+      app_id=int(sys.argv[1]),
+      url=sys.argv[2],
+      threads=5,
+      qsize=500)
+
+  # Test connection
+  print "Status:", client.get_status()
+  
   app_data = AppData()
-  print
-  client = predictionio.EventClient(APP_ID,
-    threads = THREADS,
-    qsize=REQUEST_QSIZE)
   batch_import_task(app_data, client)
   client.close()
