@@ -1,7 +1,7 @@
 from predictionio import EventClient
 from predictionio import NotFoundError
 
-client = EventClient(app_id=4, url="http://localhost:7070")
+client = EventClient(app_id=6, url="http://localhost:7070")
 
 # Check status
 print("Check status")
@@ -69,3 +69,27 @@ try:
 except NotFoundError, ex:
   print("The expected error: {0}".format(ex))
 print
+
+# Use "user"-helper methods
+
+# Set user properties implicitly create a user
+# This call creates a user "foo", and set the properties of "foo".
+print("Create user foo")
+foo_properties = {"city": "sunnyvale", "car": "honda fit"}
+print(client.set_user("foo", properties=foo_properties))
+
+# This call overrides the existing properties for user "foo", setting "car" to
+# a new "honda odyssey" and create a new property "food" to "seafood".
+print("Set new properties")
+foo_properties = {"car": "honda odyssey", "food": "seafood"}
+print(client.set_user("foo", properties=foo_properties))
+
+# This call removes the specified properties. It ignores the value of the dict.
+# After this call, the "city" will become an unset field.
+print("Unset properties")
+foo_properties = {"city": "x"}
+print(client.unset_user("foo", properties=foo_properties))
+
+# This call deletes a user
+print("Delete user")
+print(client.delete_user("foo"))

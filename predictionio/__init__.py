@@ -25,6 +25,8 @@ except ImportError:
 import json
 import urllib
 
+from datetime import datetime
+
 from predictionio.connection import Connection
 from predictionio.connection import AsyncRequest
 from predictionio.connection import PredictionIOAPIError
@@ -177,9 +179,13 @@ class EventClient(BaseClient):
       "properties" : properties,
       "appId" : self.app_id
     })
+  
+  def set_user(self, uid, properties={}):
+    return self.aset_user(uid, properties).get_response()
 
-  def aunset_user(self, uid, properties={}):
+  def aunset_user(self, uid, properties):
     """unset properties of an user"""
+    # check properties={}, it cannot be empty
     return self.acreate_event({
       "event" : "$unset",
       "entityType" : "pio_user",
@@ -187,6 +193,21 @@ class EventClient(BaseClient):
       "properties" : properties,
       "appId" : self.app_id
     })
+  
+  def unset_user(self, uid, properties):
+    return self.aunset_user(uid, properties).get_response()
+  
+  def adelete_user(self, uid):
+    """set properties of an user"""
+    return self.acreate_event({
+      "event" : "$delete",
+      "entityType" : "pio_user",
+      "entityId" : uid,
+      "appId": self.app_id,
+    })
+  
+  def delete_user(self, uid):
+    return self.adelete_user(uid).get_response()
 
   def aset_item(self, iid, properties={}):
     return self.acreate_event({
@@ -196,6 +217,9 @@ class EventClient(BaseClient):
       "properties" : properties,
       "appId" : self.app_id
     })
+  
+  def set_item(self, iid, properties={}):
+    return self.aset_item(iid, properties).get_response()
 
   def aunset_item(self, iid, properties={}):
     return self.acreate_event({
@@ -205,6 +229,9 @@ class EventClient(BaseClient):
       "properties" : properties,
       "appId" : self.app_id
     })
+  
+  def unset_item(self, iid, properties={}):
+    return self.aunset_item(iid, properties).get_response()
 
   def arecord_user_action_on_item(self, action, uid, iid, properties={}):
     return self.acreate_event({
@@ -216,18 +243,6 @@ class EventClient(BaseClient):
       "properties" : properties,
       "appId" : self.app_id
     })
-
-  def set_user(self, uid, properties={}):
-    return self.aset_user(uid, properties).get_response()
-
-  def set_item(self, iid, properties={}):
-    return self.aset_item(iid, properties).get_response()
-
-  def unset_user(self, uid, properties={}):
-    return self.aunset_user(uid, properties).get_response()
-
-  def unset_item(self, iid, properties={}):
-    return self.aunset_item(iid, properties).get_response()
 
   def record_user_action_on_item(self, action, uid, iid, properties={}):
     return self.arecord_user_action_on_item(
