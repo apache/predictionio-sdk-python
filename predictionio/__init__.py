@@ -180,8 +180,8 @@ class EventClient(BaseClient):
 
   ## Below are helper functions
   
-  def aset_user(self, uid, properties={}, eventTime=None):
-    eventTime = now_if_none(eventTime)
+  def aset_user(self, uid, properties={}, event_time=None):
+    event_time = now_if_none(event_time)
 
     """set properties of an user"""
     return self.acreate_event({
@@ -190,15 +190,15 @@ class EventClient(BaseClient):
       "entityId" : uid,
       "properties" : properties,
       "appId" : self.app_id,
-      "eventTime": eventTime.isoformat(),
+      "eventTime": event_time.isoformat(),
     })
 
-  def set_user(self, uid, properties={}, eventTime=None):
-    return self.aset_user(uid, properties, eventTime).get_response()
+  def set_user(self, uid, properties={}, event_time=None):
+    return self.aset_user(uid, properties, event_time).get_response()
 
-  def aunset_user(self, uid, properties, eventTime=None):
+  def aunset_user(self, uid, properties, event_time=None):
     """unset properties of an user"""
-    eventTime = now_if_none(eventTime)
+    event_time = now_if_none(event_time)
 
     # check properties={}, it cannot be empty
     return self.acreate_event({
@@ -207,71 +207,71 @@ class EventClient(BaseClient):
       "entityId" : uid,
       "properties" : properties,
       "appId" : self.app_id,
-      "eventTime": eventTime.isoformat(),
+      "eventTime": event_time.isoformat(),
     })
   
-  def unset_user(self, uid, properties, eventTime=None):
-    return self.aunset_user(uid, properties, eventTime).get_response()
+  def unset_user(self, uid, properties, event_time=None):
+    return self.aunset_user(uid, properties, event_time).get_response()
   
-  def adelete_user(self, uid, eventTime=None):
+  def adelete_user(self, uid, event_time=None):
     """set properties of an user"""
-    eventTime = now_if_none(eventTime)
+    event_time = now_if_none(event_time)
     return self.acreate_event({
       "event" : "$delete",
       "entityType" : "pio_user",
       "entityId" : uid,
       "appId": self.app_id,
-      "eventTime": eventTime.isoformat(),
+      "eventTime": event_time.isoformat(),
     })
   
-  def delete_user(self, uid, eventTime=None):
-    return self.adelete_user(uid, eventTime).get_response()
+  def delete_user(self, uid, event_time=None):
+    return self.adelete_user(uid, event_time).get_response()
 
-  def aset_item(self, iid, properties={}, eventTime=None):
-    eventTime = now_if_none(eventTime)
+  def aset_item(self, iid, properties={}, event_time=None):
+    event_time = now_if_none(event_time)
     return self.acreate_event({
       "event" : "$set",
       "entityType" : "pio_item",
       "entityId" : iid,
       "properties" : properties,
       "appId" : self.app_id,
-      "eventTime": eventTime.isoformat(),
+      "eventTime": event_time.isoformat(),
     })
   
-  def set_item(self, iid, properties={}, eventTime=None):
+  def set_item(self, iid, properties={}, event_time=None):
     return self.aset_item(iid, properties).get_response()
 
-  def aunset_item(self, iid, properties={}, eventTime=None):
-    eventTime = now_if_none(eventTime)
+  def aunset_item(self, iid, properties={}, event_time=None):
+    event_time = now_if_none(event_time)
     return self.acreate_event({
       "event" : "$unset",
       "entityType" : "pio_item",
       "entityId" : iid,
       "properties" : properties,
       "appId" : self.app_id,
-      "eventTime": eventTime.isoformat(),
+      "eventTime": event_time.isoformat(),
     })
   
-  def unset_item(self, iid, properties={}, eventTime=None):
-    return self.aunset_item(iid, properties, eventTime).get_response()
+  def unset_item(self, iid, properties={}, event_time=None):
+    return self.aunset_item(iid, properties, event_time).get_response()
   
-  def adelete_item(self, iid, eventTime=None):
+  def adelete_item(self, iid, event_time=None):
     """set properties of an user"""
-    eventTime = now_if_none(eventTime)
+    event_time = now_if_none(event_time)
     return self.acreate_event({
       "event" : "$delete",
       "entityType" : "pio_item",
       "entityId" : iid,
       "appId": self.app_id,
-      "eventTime": eventTime.isoformat(),
+      "eventTime": event_time.isoformat(),
     })
   
-  def delete_item(self, iid, eventTime=None):
-    return self.adelete_item(iid, eventTime).get_response()
+  def delete_item(self, iid, event_time=None):
+    return self.adelete_item(iid, event_time).get_response()
 
   def arecord_user_action_on_item(self, action, uid, iid, properties={},
-      eventTime=None):
-    eventTime = now_if_none(eventTime)
+      event_time=None):
+    event_time = now_if_none(event_time)
     return self.acreate_event({
       "event" : action,
       "entityType" : "pio_user",
@@ -280,20 +280,20 @@ class EventClient(BaseClient):
       "targetEntityId": iid,
       "properties" : properties,
       "appId" : self.app_id,
-      "eventTime": eventTime.isoformat(),
+      "eventTime": event_time.isoformat(),
     })
 
   def record_user_action_on_item(self, action, uid, iid, properties={},
-      eventTime=None):
+      event_time=None):
     return self.arecord_user_action_on_item(
-      action, uid, iid, properties, eventTime).get_response()
+      action, uid, iid, properties, event_time).get_response()
 
 
-class PredictionClient(BaseClient):
+class EngineClient(BaseClient):
   """Client for extracting prediction results from PredictionIO Engine."""
   def __init__(self, url="http://localhost:8000", threads=1,
       qsize=0, timeout=5):
-    super(PredictionClient, self).__init__(url, threads, qsize, timeout)
+    super(EngineClient, self).__init__(url, threads, qsize, timeout)
 
   def asend_query(self, data):
     path = "/"
