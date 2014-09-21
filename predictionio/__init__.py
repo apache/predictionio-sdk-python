@@ -179,7 +179,7 @@ class EventClient(BaseClient):
     return self.adelete_event(event_id).get_response()
 
   ## Below are helper functions
-  
+
   def aset_user(self, uid, properties={}, event_time=None):
     event_time = now_if_none(event_time)
 
@@ -209,10 +209,10 @@ class EventClient(BaseClient):
       "appId" : self.app_id,
       "eventTime": event_time.isoformat(),
     })
-  
+
   def unset_user(self, uid, properties, event_time=None):
     return self.aunset_user(uid, properties, event_time).get_response()
-  
+
   def adelete_user(self, uid, event_time=None):
     """set properties of an user"""
     event_time = now_if_none(event_time)
@@ -223,7 +223,7 @@ class EventClient(BaseClient):
       "appId": self.app_id,
       "eventTime": event_time.isoformat(),
     })
-  
+
   def delete_user(self, uid, event_time=None):
     return self.adelete_user(uid, event_time).get_response()
 
@@ -237,7 +237,7 @@ class EventClient(BaseClient):
       "appId" : self.app_id,
       "eventTime": event_time.isoformat(),
     })
-  
+
   def set_item(self, iid, properties={}, event_time=None):
     return self.aset_item(iid, properties).get_response()
 
@@ -251,10 +251,10 @@ class EventClient(BaseClient):
       "appId" : self.app_id,
       "eventTime": event_time.isoformat(),
     })
-  
+
   def unset_item(self, iid, properties={}, event_time=None):
     return self.aunset_item(iid, properties, event_time).get_response()
-  
+
   def adelete_item(self, iid, event_time=None):
     """set properties of an user"""
     event_time = now_if_none(event_time)
@@ -265,7 +265,7 @@ class EventClient(BaseClient):
       "appId": self.app_id,
       "eventTime": event_time.isoformat(),
     })
-  
+
   def delete_item(self, iid, event_time=None):
     return self.adelete_item(iid, event_time).get_response()
 
@@ -296,7 +296,7 @@ class EngineClient(BaseClient):
     super(EngineClient, self).__init__(url, threads, qsize, timeout)
 
   def asend_query(self, data):
-    path = "/"
+    path = "/queries.json"
     request = AsyncRequest("POST", path, **data)
     request.set_rfunc(self._aget_resp)
     self._connection.make_request(request)
@@ -304,4 +304,3 @@ class EngineClient(BaseClient):
 
   def send_query(self, data):
     return self.asend_query(data).get_response()
-
