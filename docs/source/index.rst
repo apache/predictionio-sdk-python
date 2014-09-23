@@ -43,6 +43,7 @@ predictionio Package Documentation
    :maxdepth: 1
 
    predictionio
+   predictionio_legacy
 
 
 Getting Help

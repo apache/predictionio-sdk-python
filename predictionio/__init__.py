@@ -9,7 +9,7 @@ __email__ = "help@tappingstone.com"
 __copyright__ = "Copyright 2014, TappingStone, Inc."
 __license__ = "Apache License, Version 2.0"
 
-__version__ = "0.8.0-SNAPSHOT"
+__version__ = "0.8.0"
 
 # import deprecated libraries.
 from predictionio.obsolete import Client
@@ -30,6 +30,7 @@ import pytz
 
 from predictionio.connection import Connection
 from predictionio.connection import AsyncRequest
+from predictionio.connection import AsyncResponse
 from predictionio.connection import PredictionIOAPIError
 
 
@@ -152,7 +153,22 @@ class BaseClient(object):
 
 
 class EventClient(BaseClient):
-  """Client for importing data into PredictionIO Event Server."""
+  """Client for importing data into PredictionIO Event Server.
+
+  :param app_id: the id used to identify application data.
+  :param url: the url of PredictionIO Event Server.
+  :param threads: number of threads to handle PredictionIO API requests.
+          Must be >= 1.
+  :param qsize: the max size of the request queue (optional).
+      The asynchronous request becomes blocking once this size has been
+      reached, until the queued requests are handled.
+      Default value is 0, which means infinite queue size.
+  :param timeout: timeout for HTTP connection attempts and requests in
+    seconds (optional).
+    Default value is 5.
+
+  """
+
   def __init__(self, app_id, url="http://localhost:7070",
       threads=1, qsize=0, timeout=5):
     super(EventClient, self).__init__(url, threads, qsize, timeout)
@@ -161,6 +177,26 @@ class EventClient(BaseClient):
   def acreate_event(self, event, entity_type, entity_id,
       target_entity_type=None, target_entity_id=None, properties=None,
       event_time=None):
+    """Asynchronously create an event.
+
+    :param event: event name. type str.
+    :param entity_type: entity type. It is the namespace of the entityId and
+      analogous to the table name of a relational database. The entityId must be
+      unique within same entityType. type str.
+    :param entity_id: entity id. *entity_type-entity_id* becomes the unique
+      identifier of the entity. For example, you may have entityType named user,
+      and different entity IDs, say 1 and 2. In this case, user-1 and user-2
+      uniquely identifies entities. type str
+    :param target_entity_type: target entity type. type str.
+    :param target_entity_id: target entity id. type str.
+    :param properties: a custom dict associated with an event. type dict.
+    :param event_time: the time of the event. type datetime, must contain
+      timezone info. 
+
+    :returns:
+      AsyncRequest object. You can call the get_response() method using this
+      object to get the final resuls or status of this asynchronous request.
+    """
     data = {
         "appId": self.app_id,
         "event": event,
@@ -192,11 +228,20 @@ class EventClient(BaseClient):
   def create_event(self, event, entity_type, entity_id,
       target_entity_type=None, target_entity_id=None, properties=None,
       event_time=None):
+    """Synchronously (blocking) create an event."""
     return self.acreate_event(event, entity_type, entity_id,
         target_entity_type, target_entity_id, properties, 
         event_time).get_response()
 
   def aget_event(self, event_id):
+    """Asynchronouly get an event from Event Server.
+
+    :param event_id: event id returned by the EventServer when creating the
+      event.
+
+    :returns:
+      AsyncRequest object. 
+    """
     enc_event_id = urllib.quote(event_id, "") # replace special char with %xx
     path = "/events/%s.json" % enc_event_id
     request = AsyncRequest("GET", path)
@@ -205,9 +250,18 @@ class EventClient(BaseClient):
     return request
 
   def get_event(self, event_id):
+    """Synchronouly get an event from Event Server."""
     return self.aget_event(event_id).get_response()
 
   def adelete_event(self, event_id):
+    """Asynchronouly delete an event from Event Server.
+
+    :param event_id: event id returned by the EventServer when creating the
+      event.
+
+    :returns:
+      AsyncRequest object. 
+    """
     enc_event_id = urllib.quote(event_id, "") # replace special char with %xx
     path = "/events/%s.json" % enc_event_id
     request = AsyncRequest("DELETE", path)
@@ -216,12 +270,17 @@ class EventClient(BaseClient):
     return request
 
   def delete_event(self, event_id):
+    """Synchronouly delete an event from Event Server."""
     return self.adelete_event(event_id).get_response()
 
   ## Below are helper functions
 
   def aset_user(self, uid, properties={}, event_time=None):
-    """set properties of an user"""
+    """Set properties of a user.
+   
+    Wrapper of acreate_event function, setting event to "$set" and entity_type
+    to "pio_user".
+    """
     return self.acreate_event(
       event="$set",
       entity_type="pio_user",
@@ -231,10 +290,15 @@ class EventClient(BaseClient):
     )
 
   def set_user(self, uid, properties={}, event_time=None):
+    """Set properties of a user"""
     return self.aset_user(uid, properties, event_time).get_response()
 
   def aunset_user(self, uid, properties, event_time=None):
-    """unset properties of an user"""
+    """Unset properties of an user.
+   
+    Wrapper of acreate_event function, setting event to "$unset" and entity_type
+    to "pio_user".
+    """
     # check properties={}, it cannot be empty
     return self.acreate_event(
         event="$unset",
@@ -245,10 +309,15 @@ class EventClient(BaseClient):
         )
 
   def unset_user(self, uid, properties, event_time=None):
+    """Set properties of a user"""
     return self.aunset_user(uid, properties, event_time).get_response()
 
   def adelete_user(self, uid, event_time=None):
-    """set properties of an user"""
+    """Delete a user.
+   
+    Wrapper of acreate_event function, setting event to "$delete" and entity_type
+    to "pio_user".
+    """
     return self.acreate_event(
         event="$delete",
         entity_type="pio_user",
@@ -256,9 +325,15 @@ class EventClient(BaseClient):
         event_time=event_time)
 
   def delete_user(self, uid, event_time=None):
+    """Delete a user."""
     return self.adelete_user(uid, event_time).get_response()
 
   def aset_item(self, iid, properties={}, event_time=None):
+    """Set properties of an item.
+   
+    Wrapper of acreate_event function, setting event to "$set" and entity_type
+    to "pio_item".
+    """
     return self.acreate_event(
         event="$set",
         entity_type="pio_item",
@@ -267,9 +342,15 @@ class EventClient(BaseClient):
         event_time=event_time)
 
   def set_item(self, iid, properties={}, event_time=None):
+    """Set properties of an item."""
     return self.aset_item(iid, properties, event_time).get_response()
 
   def aunset_item(self, iid, properties={}, event_time=None):
+    """Unset properties of an item.
+   
+    Wrapper of acreate_event function, setting event to "$unset" and entity_type
+    to "pio_item".
+    """
     return self.acreate_event(
         event="$unset",
         entity_type="pio_item",
@@ -278,10 +359,15 @@ class EventClient(BaseClient):
         event_time=event_time)
 
   def unset_item(self, iid, properties={}, event_time=None):
+    """Unset properties of an item."""
     return self.aunset_item(iid, properties, event_time).get_response()
 
   def adelete_item(self, iid, event_time=None):
-    """set properties of an user"""
+    """Delete an item.
+   
+    Wrapper of acreate_event function, setting event to "$delete" and entity_type
+    to "pio_item".
+    """
     return self.acreate_event(
         event="$delete",
         entity_type="pio_item",
@@ -289,10 +375,16 @@ class EventClient(BaseClient):
         event_time=event_time)
 
   def delete_item(self, iid, event_time=None):
+    """Delete an item."""
     return self.adelete_item(iid, event_time).get_response()
 
   def arecord_user_action_on_item(self, action, uid, iid, properties={},
       event_time=None):
+    """Create a user-to-item action.
+
+    Wrapper of acreate_event function, setting entity_type to "pio_user" and
+    target_entity_type to "pio_item".
+    """
     return self.acreate_event(
         event=action,
         entity_type="pio_user",
@@ -304,17 +396,42 @@ class EventClient(BaseClient):
 
   def record_user_action_on_item(self, action, uid, iid, properties={},
       event_time=None):
+    """Create a user-to-item action."""
     return self.arecord_user_action_on_item(
       action, uid, iid, properties, event_time).get_response()
 
 
 class EngineClient(BaseClient):
-  """Client for extracting prediction results from PredictionIO Engine."""
+  """Client for extracting prediction results from an PredictionIO Engine
+  Instance.
+  
+  :param url: the url of the PredictionIO Engine Instance.
+  :param threads: number of threads to handle PredictionIO API requests.
+          Must be >= 1.
+  :param qsize: the max size of the request queue (optional).
+      The asynchronous request becomes blocking once this size has been
+      reached, until the queued requests are handled.
+      Default value is 0, which means infinite queue size.
+  :param timeout: timeout for HTTP connection attempts and requests in
+    seconds (optional).
+    Default value is 5.
+  
+  """
   def __init__(self, url="http://localhost:8000", threads=1,
       qsize=0, timeout=5):
     super(EngineClient, self).__init__(url, threads, qsize, timeout)
 
   def asend_query(self, data):
+    """Asynchronously send a request to the engine instance with data as the
+    query.
+
+    :param data: the query: It is coverted to an json object using json.dumps
+      method. type dict. 
+
+    :returns:
+      AsyncRequest object. You can call the get_response() method using this
+      object to get the final resuls or status of this asynchronous request.
+    """
     path = "/queries.json"
     request = AsyncRequest("POST", path, **data)
     request.set_rfunc(self._aget_resp)
@@ -322,4 +439,11 @@ class EngineClient(BaseClient):
     return request
 
   def send_query(self, data):
+    """Synchronously send a request.
+    
+    :param data: the query: It is coverted to an json object using json.dumps
+      method. type dict. 
+
+    :returns: the prediction.
+    """
     return self.asend_query(data).get_response()

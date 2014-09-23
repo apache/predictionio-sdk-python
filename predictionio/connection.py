@@ -101,8 +101,9 @@ class AsyncRequest(object):
     self.response_q.put(response)
 
   def get_response(self):
-    """get the response
+    """Get the response. Blocking.
 
+    :returns: self.rfunc's return type.
     """
     if self._response is None:
       tmp_response = self.response_q.get(True)  # NOTE: blocking
@@ -115,34 +116,28 @@ class AsyncRequest(object):
 
 
 class AsyncResponse(object):
+  """Store the response of asynchronous request
 
-  """AsyncResponse object.
-
-  Store the response of asynchronous request
-
-  when get the response, user should check if error is None (which means no
-  Exception happens)
-  if error is None, then should check if the status is expected
-
-  Attributes:
-    error: exception object if any happens
-    version: int
-    status: int
-    reason: str
-    headers: dict
-    body: str (NOTE: not necessarily can be converted to JSON,
-        eg, for GET request to /v1/status)
-    request: the corresponding AsyncRequest object
+  When get the response, user should check if error is None (which means no
+  Exception happens).
+  If error is None, then should check if the status is expected.
   """
 
   def __init__(self):
+    #: exception object if any happens
     self.error = None
+
     self.version = None
     self.status = None
     self.reason = None
+    #: Response header. str
     self.headers = None
+    #: Response body. str
     self.body = None
-    self.request = None  # point back to the request object
+    #: Jsonified response body. Remains None if conversion is unsuccessful.
+    self.json_body = None
+    #: Point back to the AsyncRequest object
+    self.request = None  
 
   def __str__(self):
     return "e:%s v:%s s:%s r:%s h:%s b:%s" % (self.error, self.version,
