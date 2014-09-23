@@ -104,16 +104,13 @@ def import_data(client, app_id, ticker, start_time, end_time, event_time):
 
   properties = {'yahoo': yahoo_data}
 
-  data = {
-      'event': '$set',
-      'entityType': 'yahoo',
-      'entityId': ticker,
-      'properties': properties,
-      'appId': app_id,
-      'eventTime': event_time.replace(tzinfo=pytz.utc).isoformat(),
-      }
-
-  response = client.create_event(data)
+  response = client.create_event(
+      event='$set',
+      entity_type='yahoo',
+      entity_id=ticker,
+      properties=properties,
+      event_time=event_time.replace(tzinfo=pytz.utc))
+      
   print(response)
 
 
@@ -207,5 +204,5 @@ def import_one(app_id):
 
 if __name__ == '__main__':
   #import_all(app_id=2)
-  #import_data_with_gaps(app_id=1)
-  import_one(app_id=1)
+  import_data_with_gaps(app_id=1)
+  #import_one(app_id=1)

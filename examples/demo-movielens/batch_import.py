@@ -17,7 +17,7 @@ def batch_import_task(app_id, app_data, client, all_info=False):
         sys.stdout.write('\r[Info] %s' % count)
         sys.stdout.flush()
 
-    client.aset_user(v.uid)
+    client.aset_user(uid=v.uid)
 
   sys.stdout.write('\r[Info] %s users were imported.\n' % count)
   sys.stdout.flush()
@@ -34,8 +34,9 @@ def batch_import_task(app_id, app_data, client, all_info=False):
         sys.stdout.flush()
 
     itypes = ("movie",) + v.genres
-    client.aset_item(v.iid,
-      { "pio_itypes" : list(itypes),
+    client.aset_item(iid=v.iid,
+      properties={ 
+        "pio_itypes" : list(itypes),
         "pio_starttime" : v.release_date.isoformat() + 'Z',
         "name" : v.name,
         "year" : v.year } )
@@ -55,16 +56,15 @@ def batch_import_task(app_id, app_data, client, all_info=False):
         sys.stdout.flush()
 
     properties = { "pio_rating" : int(v.rating) }
-    req = client.acreate_event({
-      "event" : "rate",
-      "entityType" : "pio_user",
-      "entityId" : v.uid,
-      "targetEntityType" : "pio_item",
-      "targetEntityId": v.iid,
-      "properties" : properties,
-      "appId" : app_id,
-      "eventTime" : v.t.replace(tzinfo=pytz.utc).isoformat(),
-    })
+    req = client.acreate_event(
+        event="rate",
+        entity_type="pio_user",
+        entity_id=v.uid,
+        target_entity_type="pio_item",
+        target_entity_id=v.iid,
+        properties=properties,
+        event_time=v.t.replace(tzinfo=pytz.utc),
+        )
 
   sys.stdout.write('\r[Info] %s rate actions were imported.\n' % count)
   sys.stdout.flush()

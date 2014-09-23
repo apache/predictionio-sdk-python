@@ -41,8 +41,20 @@ class NotFoundError(PredictionIOAPIError):
   pass
 
 
-def now_if_none(t):
-  return datetime.now(pytz.utc) if t is None else t
+def event_time_validation(t):
+  """ Validate event_time according to EventAPI Specification.
+  """
+
+  if t is None:
+    return datetime.now(pytz.utc)
+
+  if type(t) != datetime:
+    raise AttributeError("event_time must be datetime.datetime")
+
+  if t.tzinfo is None:
+    raise AttributeError("event_time must have tzinfo")
+
+  return t
 
 
 class BaseClient(object):
@@ -146,15 +158,40 @@ class EventClient(BaseClient):
     super(EventClient, self).__init__(url, threads, qsize, timeout)
     self.app_id = app_id
 
-  def acreate_event(self, data):
+  def acreate_event(self, event, entity_type, entity_id,
+      target_entity_type=None, target_entity_id=None, properties=None,
+      event_time=None):
+    data = {
+        "appId": self.app_id,
+        "event": event,
+        "entityType": entity_type,
+        "entityId": entity_id,
+        }
+
+    if target_entity_type is not None:
+      data["targetEntityType"] = target_entity_type
+
+    if target_entity_id is not None:
+      data["targetEntityId"] = target_entity_id
+
+    if properties is not None:
+      data["properties"] = properties
+
+    event_time = event_time_validation(event_time)
+    data["eventTime"] = event_time.isoformat()
+    
     path = "/events.json"
     request = AsyncRequest("POST", path, **data)
     request.set_rfunc(self._acreate_resp)
     self._connection.make_request(request)
     return request
 
-  def create_event(self, data):
-    return self.acreate_event(data).get_response()
+  def create_event(self, event, entity_type, entity_id,
+      target_entity_type=None, target_entity_id=None, properties=None,
+      event_time=None):
+    return self.acreate_event(event, entity_type, entity_id,
+        target_entity_type, target_entity_id, properties, 
+        event_time).get_response()
 
   def aget_event(self, event_id):
     enc_event_id = urllib.quote(event_id, "") # replace special char with %xx
@@ -181,107 +218,86 @@ class EventClient(BaseClient):
   ## Below are helper functions
 
   def aset_user(self, uid, properties={}, event_time=None):
-    event_time = now_if_none(event_time)
-
     """set properties of an user"""
-    return self.acreate_event({
-      "event" : "$set",
-      "entityType" : "pio_user",
-      "entityId" : uid,
-      "properties" : properties,
-      "appId" : self.app_id,
-      "eventTime": event_time.isoformat(),
-    })
+    return self.acreate_event(
+      event="$set",
+      entity_type="pio_user",
+      entity_id=uid,
+      properties=properties,
+      event_time=event_time,
+    )
 
   def set_user(self, uid, properties={}, event_time=None):
     return self.aset_user(uid, properties, event_time).get_response()
 
   def aunset_user(self, uid, properties, event_time=None):
     """unset properties of an user"""
-    event_time = now_if_none(event_time)
-
     # check properties={}, it cannot be empty
-    return self.acreate_event({
-      "event" : "$unset",
-      "entityType" : "pio_user",
-      "entityId" : uid,
-      "properties" : properties,
-      "appId" : self.app_id,
-      "eventTime": event_time.isoformat(),
-    })
+    return self.acreate_event(
+        event="$unset",
+        entity_type="pio_user",
+        entity_id=uid,
+        properties=properties,
+        event_time=event_time,
+        )
 
   def unset_user(self, uid, properties, event_time=None):
     return self.aunset_user(uid, properties, event_time).get_response()
 
   def adelete_user(self, uid, event_time=None):
     """set properties of an user"""
-    event_time = now_if_none(event_time)
-    return self.acreate_event({
-      "event" : "$delete",
-      "entityType" : "pio_user",
-      "entityId" : uid,
-      "appId": self.app_id,
-      "eventTime": event_time.isoformat(),
-    })
+    return self.acreate_event(
+        event="$delete",
+        entity_type="pio_user",
+        entity_id=uid,
+        event_time=event_time)
 
   def delete_user(self, uid, event_time=None):
     return self.adelete_user(uid, event_time).get_response()
 
   def aset_item(self, iid, properties={}, event_time=None):
-    event_time = now_if_none(event_time)
-    return self.acreate_event({
-      "event" : "$set",
-      "entityType" : "pio_item",
-      "entityId" : iid,
-      "properties" : properties,
-      "appId" : self.app_id,
-      "eventTime": event_time.isoformat(),
-    })
+    return self.acreate_event(
+        event="$set",
+        entity_type="pio_item",
+        entity_id=iid,
+        properties=properties,
+        event_time=event_time)
 
   def set_item(self, iid, properties={}, event_time=None):
-    return self.aset_item(iid, properties).get_response()
+    return self.aset_item(iid, properties, event_time).get_response()
 
   def aunset_item(self, iid, properties={}, event_time=None):
-    event_time = now_if_none(event_time)
-    return self.acreate_event({
-      "event" : "$unset",
-      "entityType" : "pio_item",
-      "entityId" : iid,
-      "properties" : properties,
-      "appId" : self.app_id,
-      "eventTime": event_time.isoformat(),
-    })
+    return self.acreate_event(
+        event="$unset",
+        entity_type="pio_item",
+        entity_id=iid,
+        properties=properties,
+        event_time=event_time)
 
   def unset_item(self, iid, properties={}, event_time=None):
     return self.aunset_item(iid, properties, event_time).get_response()
 
   def adelete_item(self, iid, event_time=None):
     """set properties of an user"""
-    event_time = now_if_none(event_time)
-    return self.acreate_event({
-      "event" : "$delete",
-      "entityType" : "pio_item",
-      "entityId" : iid,
-      "appId": self.app_id,
-      "eventTime": event_time.isoformat(),
-    })
+    return self.acreate_event(
+        event="$delete",
+        entity_type="pio_item",
+        entity_id=iid,
+        event_time=event_time)
 
   def delete_item(self, iid, event_time=None):
     return self.adelete_item(iid, event_time).get_response()
 
   def arecord_user_action_on_item(self, action, uid, iid, properties={},
       event_time=None):
-    event_time = now_if_none(event_time)
-    return self.acreate_event({
-      "event" : action,
-      "entityType" : "pio_user",
-      "entityId" : uid,
-      "targetEntityType" : "pio_item",
-      "targetEntityId": iid,
-      "properties" : properties,
-      "appId" : self.app_id,
-      "eventTime": event_time.isoformat(),
-    })
+    return self.acreate_event(
+        event=action,
+        entity_type="pio_user",
+        entity_id=uid,
+        target_entity_type="pio_item",
+        target_entity_id=iid,
+        properties=properties,
+        event_time=event_time)
 
   def record_user_action_on_item(self, action, uid, iid, properties={},
       event_time=None):
