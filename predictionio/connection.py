@@ -20,6 +20,7 @@ except ImportError:
   from urllib.parse import urlencode
 
 import datetime
+import json
 import logging
 
 # use generators for python2 and python3
@@ -100,44 +101,43 @@ class AsyncRequest(object):
     self.response_q.put(response)
 
   def get_response(self):
-    """get the response
+    """Get the response. Blocking.
 
+    :returns: self.rfunc's return type.
     """
     if self._response is None:
-      self._response = self.response_q.get(True)  # NOTE: blocking
+      tmp_response = self.response_q.get(True)  # NOTE: blocking
+      if self.rfunc is None:
+        self._response = tmp_response
+      else:
+        self._response = self.rfunc(tmp_response)
 
     return self._response
 
 
 class AsyncResponse(object):
+  """Store the response of asynchronous request
 
-  """AsyncResponse object.
-
-  Store the response of asynchronous request
-
-  when get the response, user should check if error is None (which means no
-  Exception happens)
-  if error is None, then should check if the status is expected
-
-  Attributes:
-    error: exception object if any happens
-    version: int
-    status: int
-    reason: str
-    headers: dict
-    body: str (NOTE: not necessarily can be converted to JSON,
-        eg, for GET request to /v1/status)
-    request: the corresponding AsyncRequest object
+  When get the response, user should check if error is None (which means no
+  Exception happens).
+  If error is None, then should check if the status is expected.
   """
 
   def __init__(self):
+    #: exception object if any happens
     self.error = None
+
     self.version = None
     self.status = None
     self.reason = None
+    #: Response header. str
     self.headers = None
+    #: Response body. str
     self.body = None
-    self.request = None  # point back to the request object
+    #: Jsonified response body. Remains None if conversion is unsuccessful.
+    self.json_body = None
+    #: Point back to the AsyncRequest object
+    self.request = None  
 
   def __str__(self):
     return "e:%s v:%s s:%s r:%s h:%s b:%s" % (self.error, self.version,
@@ -150,6 +150,11 @@ class AsyncResponse(object):
     self.reason = reason
     self.headers = headers
     self.body = body
+    # Try to extract the json.
+    try:
+      self.json_body = json.loads(body)
+    except ValueError, ex:
+      self.json_body = None
 
   def set_error(self, error):
     self.error = error
@@ -194,9 +199,12 @@ class PredictionIOHttpConnection(object):
       mod_headers["Connection"] = "keep-alive"
       enc_body = None
       if body:  # if body is not empty
-        enc_body = urlencode(body)
+        #enc_body = urlencode(body)
+        #mod_headers[
+        #  "Content-type"] = "application/x-www-form-urlencoded"
+        enc_body = json.dumps(body)
         mod_headers[
-          "Content-type"] = "application/x-www-form-urlencoded"
+          "Content-type"] = "application/json"
         #mod_headers["Accept"] = "text/plain"
     except Exception as e:
       response.set_error(e)

@@ -9,8 +9,10 @@ __email__ = "help@tappingstone.com"
 __copyright__ = "Copyright 2014, TappingStone, Inc."
 __license__ = "Apache License, Version 2.0"
 
-__version__ = "0.7.0"
+__version__ = "0.8.0"
 
+# import deprecated libraries.
+from predictionio.obsolete import Client
 
 # import packages
 import re
@@ -23,138 +25,59 @@ except ImportError:
 import json
 import urllib
 
+from datetime import datetime
+import pytz
+
 from predictionio.connection import Connection
 from predictionio.connection import AsyncRequest
+from predictionio.connection import AsyncResponse
 from predictionio.connection import PredictionIOAPIError
 
-"""Error exception defined for this API
 
-Should be handled by the user
-"""
-
-
-class ServerStatusError(PredictionIOAPIError):
-
-  "Error happened when tried to get status of the API server"
+class NotCreatedError(PredictionIOAPIError):
   pass
 
 
-class UserNotCreatedError(PredictionIOAPIError):
-
-  "Error happened when tried to create user"
+class NotFoundError(PredictionIOAPIError):
   pass
 
 
-class UserNotFoundError(PredictionIOAPIError):
-
-  "Error happened when tried to get user"
-  pass
-
-
-class UserNotDeletedError(PredictionIOAPIError):
-
-  "Error happened when tried to delete user"
-  pass
-
-
-class ItemNotCreatedError(PredictionIOAPIError):
-
-  "Error happened when tried to create item"
-  pass
-
-
-class ItemNotFoundError(PredictionIOAPIError):
-
-  "Error happened when tried to get item"
-  pass
-
-
-class ItemNotDeletedError(PredictionIOAPIError):
-
-  "Error happened when tried to delete item"
-  pass
-
-
-class U2IActionNotCreatedError(PredictionIOAPIError):
-
-  "Error happened when tried to create user-to-item action"
-  pass
-
-
-class ItemRecNotFoundError(PredictionIOAPIError):
-
-  "Error happened when tried to get item recommendation"
-  pass
-
-
-class ItemSimNotFoundError(PredictionIOAPIError):
-
-  "Error happened when tried to get similar items"
-  pass
-
-class ItemRankNotFoundError(PredictionIOAPIError):
-
-  "Error happened when treid to rank item"
-  pass
-
-class InvalidArgumentError(PredictionIOAPIError):
-
-  "Arguments are not valid"
-  pass
-
-# map to API
-LIKE_API = "like"
-DISLIKE_API = "dislike"
-VIEW_API = "view"
-CONVERSION_API = "conversion"
-RATE_API = "rate"
-
-
-class Client(object):
-
-  """PredictionIO client object.
-
-  This is an object representing a PredictionIO's client. This object
-  provides methods for making PredictionIO API requests.
-
-  :param appkey: the App Key provided by PredictionIO.
-  :param threads: number of threads to handle PredictionIO API requests.
-          Must be >= 1.
-  :param apiurl: the PredictionIO API URL path.
-  :param apiversion: the PredictionIO API version. (optional)
-       (eg. "", or "/v1")
-  :param qsize: the max size of the request queue (optional).
-      The asynchronous request becomes blocking once this size has been
-      reached, until the queued requests are handled.
-      Default value is 0, which means infinite queue size.
-  :param timeout: timeout for HTTP connection attempts and requests in
-    seconds (optional).
-    Default value is 5.
-
+def event_time_validation(t):
+  """ Validate event_time according to EventAPI Specification.
   """
 
-  def __init__(self, appkey, threads=1, apiurl="http://localhost:8000",
-         apiversion="", qsize=0, timeout=5):
+  if t is None:
+    return datetime.now(pytz.utc)
+
+  if type(t) != datetime:
+    raise AttributeError("event_time must be datetime.datetime")
+
+  if t.tzinfo is None:
+    raise AttributeError("event_time must have tzinfo")
+
+  return t
+
+
+class BaseClient(object):
+  def __init__(self, url, threads=1, qsize=0, timeout=5):
     """Constructor of Client object.
 
     """
-    self.appkey = appkey
     self.threads = threads
-    self.apiurl = apiurl
-    self.apiversion = apiversion
+    self.url = url
     self.qsize = qsize
     self.timeout = timeout
 
     # check connection type
     https_pattern = r'^https://(.*)'
     http_pattern = r'^http://(.*)'
-    m = re.match(https_pattern, apiurl)
+    m = re.match(https_pattern, url)
     self.https = True
     if m is None:  # not matching https
-      m = re.match(http_pattern, apiurl)
+      m = re.match(http_pattern, url)
       self.https = False
       if m is None:  # not matching http either
-        raise InvalidArgumentError("apiurl is not valid: %s" % apiurl)
+        raise InvalidArgumentError("url is not valid: %s" % url)
     self.host = m.group(1)
 
     self._uid = None  # identified uid
@@ -179,13 +102,6 @@ class Client(object):
     """
     return self._connection.pending_requests()
 
-  def identify(self, uid):
-    """Identify the uid
-
-    :param uid: user id. type str.
-    """
-    self._uid = uid
-
   def get_status(self):
     """Get the status of the PredictionIO API Server
 
@@ -197,1018 +113,337 @@ class Client(object):
     """
     path = "/"
     request = AsyncRequest("GET", path)
-    request.set_rfunc(self._aget_status_resp)
+    request.set_rfunc(self._aget_resp)
     self._connection.make_request(request)
-    result = self.aresp(request)
+    result = request.get_response()
     return result
 
-  def _aget_status_resp(self, response):
-    """Handle the AsyncResponse of get status request"""
+  def _acreate_resp(self, response):
     if response.error is not None:
-      raise ServerStatusError("Exception happened: %s for request %s" %
+      raise NotCreatedError("Exception happened: %s for request %s" %
+                    (response.error, response.request))
+    elif response.status != httplib.CREATED:
+      raise NotCreatedError("request: %s status: %s body: %s" %
+                    (response.request, response.status,
+                     response.body))
+
+    return response
+
+  def _aget_resp(self, response):
+    if response.error is not None:
+      raise NotFoundError("Exception happened: %s for request %s" %
                   (response.error, response.request))
     elif response.status != httplib.OK:
-      raise ServerStatusError("request: %s status: %s body: %s" %
+      raise NotFoundError("request: %s status: %s body: %s" %
                   (response.request, response.status,
                    response.body))
 
-    # data = json.loads(response.body) # convert json string to dict
+    return response.json_body
+
+  def _adelete_resp(self, response):
+    if response.error is not None:
+      raise NotFoundError("Exception happened: %s for request %s" %
+                  (response.error, response.request))
+    elif response.status != httplib.OK:
+      raise NotFoundError("request: %s status: %s body: %s" %
+                  (response.request, response.status,
+                   response.body))
+
     return response.body
 
-  def acreate_user(self, uid, params={}):
-    """Asynchronously create a user.
 
-    :param uid: user id. type str.
-    :param params: optional attributes. type dictionary.
-        For example,
-        { 'custom': 'value', 'pio_inactive' : True,
-        'pio_latlng': [4.5,67.8] }
+class EventClient(BaseClient):
+  """Client for importing data into PredictionIO Event Server.
 
-    :returns:
-      AsyncRequest object. You should call the aresp() method using this
-      AsyncRequest object as argument to get the final result or status
-      of this asynchronous request.
+  :param app_id: the id used to identify application data.
+  :param url: the url of PredictionIO Event Server.
+  :param threads: number of threads to handle PredictionIO API requests.
+          Must be >= 1.
+  :param qsize: the max size of the request queue (optional).
+      The asynchronous request becomes blocking once this size has been
+      reached, until the queued requests are handled.
+      Default value is 0, which means infinite queue size.
+  :param timeout: timeout for HTTP connection attempts and requests in
+    seconds (optional).
+    Default value is 5.
 
-    """
+  """
 
-    if "pio_latlng" in params:
-      params["pio_latlng"] = ",".join(map(str, params["pio_latlng"]))
-    if "pio_inactive" in params:
-      params["pio_inactive"] = str(params["pio_inactive"]).lower()
+  def __init__(self, app_id, url="http://localhost:7070",
+      threads=1, qsize=0, timeout=5):
+    super(EventClient, self).__init__(url, threads, qsize, timeout)
+    self.app_id = app_id
 
-    path = "%s/users.json" % self.apiversion
-    request = AsyncRequest(
-      "POST", path, pio_appkey=self.appkey, pio_uid=uid, **params)
-    request.set_rfunc(self._acreate_user_resp)
-    self._connection.make_request(request)
+  def acreate_event(self, event, entity_type, entity_id,
+      target_entity_type=None, target_entity_id=None, properties=None,
+      event_time=None):
+    """Asynchronously create an event.
 
-    return request
-
-  def _acreate_user_resp(self, response):
-    """Private function to handle the AsyncResponse of the acreate_user
-    request.
-
-    :param response: AsyncResponse object.
-
-    :returns:
-      None.
-
-    :raises:
-      UserNotCreatedError.
-
-    """
-    if response.error is not None:
-      raise UserNotCreatedError("Exception happened: %s for request %s" %
-                    (response.error, response.request))
-    elif response.status != httplib.CREATED:
-      raise UserNotCreatedError("request: %s status: %s body: %s" %
-                    (response.request, response.status,
-                     response.body))
-
-    return None
-
-  def aget_user(self, uid):
-    """Asynchronously get user.
-
-    :param uid: user id. type str.
+    :param event: event name. type str.
+    :param entity_type: entity type. It is the namespace of the entityId and
+      analogous to the table name of a relational database. The entityId must be
+      unique within same entityType. type str.
+    :param entity_id: entity id. *entity_type-entity_id* becomes the unique
+      identifier of the entity. For example, you may have entityType named user,
+      and different entity IDs, say 1 and 2. In this case, user-1 and user-2
+      uniquely identifies entities. type str
+    :param target_entity_type: target entity type. type str.
+    :param target_entity_id: target entity id. type str.
+    :param properties: a custom dict associated with an event. type dict.
+    :param event_time: the time of the event. type datetime, must contain
+      timezone info. 
 
     :returns:
-      AsyncRequest object. You should call the aresp() method using this
-      AsyncRequest object as argument to get the final result or status
-      of this asynchronous request.
+      AsyncRequest object. You can call the get_response() method using this
+      object to get the final resuls or status of this asynchronous request.
     """
+    data = {
+        "appId": self.app_id,
+        "event": event,
+        "entityType": entity_type,
+        "entityId": entity_id,
+        }
 
-    enc_uid = urllib.quote(uid, "")  # replace special char with %xx
-    path = "%s/users/%s.json" % (self.apiversion, enc_uid)
-    request = AsyncRequest("GET", path, pio_appkey=self.appkey)
-    request.set_rfunc(self._aget_user_resp)
-    self._connection.make_request(request)
+    if target_entity_type is not None:
+      data["targetEntityType"] = target_entity_type
 
-    return request
+    if target_entity_id is not None:
+      data["targetEntityId"] = target_entity_id
 
-  def _aget_user_resp(self, response):
-    """Private function to handle the AsyncResponse of the aget_user
-    request .
+    if properties is not None:
+      data["properties"] = properties
 
-    :param response: AsyncResponse object.
-
-    :returns:
-      User data in Dictionary format.
-
-    :rasies:
-      UserNotFoundError.
-
-    """
-    if response.error is not None:
-      raise UserNotFoundError("Exception happened: %s for request %s" %
-                  (response.error, response.request))
-    elif response.status != httplib.OK:
-      raise UserNotFoundError("request: %s status: %s body: %s" %
-                  (response.request, response.status,
-                   response.body))
-
-    data = json.loads(response.body)  # convert json string to dict
-    return data
-
-  def adelete_user(self, uid):
-    """Asynchronously delete user.
-
-    :param uid: user id. type str.
-
-    :returns:
-      AsyncRequest object. You should call the aresp() method using this
-      AsyncRequest object as argument to get the final result or status
-      of this asynchronous request.
-    """
-
-    enc_uid = urllib.quote(uid, "")  # replace special char with %xx
-    path = "%s/users/%s.json" % (self.apiversion, enc_uid)
-    request = AsyncRequest("DELETE", path, pio_appkey=self.appkey)
-    request.set_rfunc(self._adelete_user_resp)
-    self._connection.make_request(request)
-
-    return request
-
-  def _adelete_user_resp(self, response):
-    """Private function to handle the AsyncResponse of the adelete_user
-    request.
-
-    :param response: AsyncResponse object.
-
-    :returns:
-      None.
-
-    :raises:
-      UserNotDeletedError.
-
-    """
-    if response.error is not None:
-      raise UserNotDeletedError("Exception happened: %s for request %s" %
-                    (response.error, response.request))
-    elif response.status != httplib.OK:
-      raise UserNotDeletedError("request: %s status: %s body: %s" %
-                    (response.request, response.status,
-                     response.body))
-    return None
-
-  def acreate_item(self, iid, itypes, params={}):
-    """Asynchronously create item.
-
-    :param iid: item id. type str.
-    :param itypes: item types. Tuple of Str.
-        For example, if this item belongs to item types "t1", "t2",
-        "t3", "t4",then itypes=("t1", "t2", "t3", "t4").
-        NOTE: if this item belongs to only one itype, use tuple of one
-        element, eg. itypes=("t1",)
-    :param params: optional attributes. type dictionary.
-        For example,
-        { 'custom': 'value', 'pio_inactive' : True,
-        'pio_latlng': [4.5,67.8] }
-    :returns:
-      AsyncRequest object. You should call the aresp() method using this
-      AsyncRequest object as argument to get the final result or status
-      of this asynchronous request.
-    """
-    itypes_str = ",".join(itypes)  # join items with ","
-
-    if "pio_latlng" in params:
-      params["pio_latlng"] = ",".join(map(str, params["pio_latlng"]))
-    if "pio_inactive" in params:
-      params["pio_inactive"] = str(params["pio_inactive"]).lower()
-
-    path = "%s/items.json" % self.apiversion
-    request = AsyncRequest("POST", path, pio_appkey=self.appkey,
-                 pio_iid=iid, pio_itypes=itypes_str, **params)
-    request.set_rfunc(self._acreate_item_resp)
+    et = event_time_validation(event_time)
+    # EventServer uses milliseconds, but python datetime class uses micro. Hence
+    # need to skip the last three digits.
+    et_str = et.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + et.strftime("%z")
+    data["eventTime"] = et_str
+    
+    path = "/events.json"
+    request = AsyncRequest("POST", path, **data)
+    request.set_rfunc(self._acreate_resp)
     self._connection.make_request(request)
     return request
 
-  def _acreate_item_resp(self, response):
-    """Private function to handle the AsyncResponse of the acreate_item
-    request
+  def create_event(self, event, entity_type, entity_id,
+      target_entity_type=None, target_entity_id=None, properties=None,
+      event_time=None):
+    """Synchronously (blocking) create an event."""
+    return self.acreate_event(event, entity_type, entity_id,
+        target_entity_type, target_entity_id, properties, 
+        event_time).get_response()
 
-    :param response: AsyncResponse object.
+  def aget_event(self, event_id):
+    """Asynchronouly get an event from Event Server.
 
-    :returns:
-      None
-    :raises:
-      ItemNotCreatedError
-
-    """
-    if response.error is not None:
-      raise ItemNotCreatedError("Exception happened: %s for request %s" %
-                    (response.error, response.request))
-    elif response.status != httplib.CREATED:
-      raise ItemNotCreatedError("request: %s status: %s body: %s" %
-                    (response.request, response.status,
-                     response.body))
-    return None
-
-  def aget_item(self, iid):
-    """Asynchronously get item
-
-    :param iid: item id. type str.
+    :param event_id: event id returned by the EventServer when creating the
+      event.
 
     :returns:
-      AsyncRequest object. You should call the aresp() method using this
-      AsyncRequest object as argument to get the final result or status
-      of this asynchronous request.
+      AsyncRequest object. 
     """
-    enc_iid = urllib.quote(iid, "")
-    path = "%s/items/%s.json" % (self.apiversion, enc_iid)
-    request = AsyncRequest("GET", path, pio_appkey=self.appkey)
-    request.set_rfunc(self._aget_item_resp)
+    enc_event_id = urllib.quote(event_id, "") # replace special char with %xx
+    path = "/events/%s.json" % enc_event_id
+    request = AsyncRequest("GET", path)
+    request.set_rfunc(self._aget_resp)
     self._connection.make_request(request)
     return request
 
-  def _aget_item_resp(self, response):
-    """Private function to handle the AsyncResponse of the aget_item
-    request
+  def get_event(self, event_id):
+    """Synchronouly get an event from Event Server."""
+    return self.aget_event(event_id).get_response()
 
-    :param response: AsyncResponse object.
+  def adelete_event(self, event_id):
+    """Asynchronouly delete an event from Event Server.
 
-    :returns:
-      item data in dictionary format.
-
-    :raises:
-      ItemNotFoundError.
-
-    """
-    if response.error is not None:
-      raise ItemNotFoundError("Exception happened: %s for request %s" %
-                  (response.error, response.request))
-    elif response.status != httplib.OK:
-      raise ItemNotFoundError("request: %s status: %s body: %s" %
-                  (response.request, response.status,
-                   response.body))
-
-    data = json.loads(response.body)  # convert json string to dict
-    if "pio_itypes" in data:
-      # convert from list to tuple
-      data["pio_itypes"] = tuple(data["pio_itypes"])
-
-    return data
-
-  def adelete_item(self, iid):
-    """Asynchronously delete item
-
-    :param iid: item id. type str.
+    :param event_id: event id returned by the EventServer when creating the
+      event.
 
     :returns:
-      AsyncRequest object. You should call the aresp() method using this
-      AsyncRequest object as argument to get the final result or status
-      of this asynchronous request.
+      AsyncRequest object. 
     """
-
-    enc_iid = urllib.quote(iid, "")
-    path = "%s/items/%s.json" % (self.apiversion, enc_iid)
-    request = AsyncRequest("DELETE", path, pio_appkey=self.appkey)
-    request.set_rfunc(self._adelete_item_resp)
+    enc_event_id = urllib.quote(event_id, "") # replace special char with %xx
+    path = "/events/%s.json" % enc_event_id
+    request = AsyncRequest("DELETE", path)
+    request.set_rfunc(self._adelete_resp)
     self._connection.make_request(request)
     return request
 
-  def _adelete_item_resp(self, response):
-    """Private function to handle the AsyncResponse of the adelete_item
-    request
+  def delete_event(self, event_id):
+    """Synchronouly delete an event from Event Server."""
+    return self.adelete_event(event_id).get_response()
 
-    :param response: AsyncResponse object
+  ## Below are helper functions
+
+  def aset_user(self, uid, properties={}, event_time=None):
+    """Set properties of a user.
+   
+    Wrapper of acreate_event function, setting event to "$set" and entity_type
+    to "pio_user".
+    """
+    return self.acreate_event(
+      event="$set",
+      entity_type="pio_user",
+      entity_id=uid,
+      properties=properties,
+      event_time=event_time,
+    )
+
+  def set_user(self, uid, properties={}, event_time=None):
+    """Set properties of a user"""
+    return self.aset_user(uid, properties, event_time).get_response()
+
+  def aunset_user(self, uid, properties, event_time=None):
+    """Unset properties of an user.
+   
+    Wrapper of acreate_event function, setting event to "$unset" and entity_type
+    to "pio_user".
+    """
+    # check properties={}, it cannot be empty
+    return self.acreate_event(
+        event="$unset",
+        entity_type="pio_user",
+        entity_id=uid,
+        properties=properties,
+        event_time=event_time,
+        )
+
+  def unset_user(self, uid, properties, event_time=None):
+    """Set properties of a user"""
+    return self.aunset_user(uid, properties, event_time).get_response()
+
+  def adelete_user(self, uid, event_time=None):
+    """Delete a user.
+   
+    Wrapper of acreate_event function, setting event to "$delete" and entity_type
+    to "pio_user".
+    """
+    return self.acreate_event(
+        event="$delete",
+        entity_type="pio_user",
+        entity_id=uid,
+        event_time=event_time)
+
+  def delete_user(self, uid, event_time=None):
+    """Delete a user."""
+    return self.adelete_user(uid, event_time).get_response()
+
+  def aset_item(self, iid, properties={}, event_time=None):
+    """Set properties of an item.
+   
+    Wrapper of acreate_event function, setting event to "$set" and entity_type
+    to "pio_item".
+    """
+    return self.acreate_event(
+        event="$set",
+        entity_type="pio_item",
+        entity_id=iid,
+        properties=properties,
+        event_time=event_time)
+
+  def set_item(self, iid, properties={}, event_time=None):
+    """Set properties of an item."""
+    return self.aset_item(iid, properties, event_time).get_response()
+
+  def aunset_item(self, iid, properties={}, event_time=None):
+    """Unset properties of an item.
+   
+    Wrapper of acreate_event function, setting event to "$unset" and entity_type
+    to "pio_item".
+    """
+    return self.acreate_event(
+        event="$unset",
+        entity_type="pio_item",
+        entity_id=iid,
+        properties=properties,
+        event_time=event_time)
+
+  def unset_item(self, iid, properties={}, event_time=None):
+    """Unset properties of an item."""
+    return self.aunset_item(iid, properties, event_time).get_response()
+
+  def adelete_item(self, iid, event_time=None):
+    """Delete an item.
+   
+    Wrapper of acreate_event function, setting event to "$delete" and entity_type
+    to "pio_item".
+    """
+    return self.acreate_event(
+        event="$delete",
+        entity_type="pio_item",
+        entity_id=iid,
+        event_time=event_time)
+
+  def delete_item(self, iid, event_time=None):
+    """Delete an item."""
+    return self.adelete_item(iid, event_time).get_response()
+
+  def arecord_user_action_on_item(self, action, uid, iid, properties={},
+      event_time=None):
+    """Create a user-to-item action.
+
+    Wrapper of acreate_event function, setting entity_type to "pio_user" and
+    target_entity_type to "pio_item".
+    """
+    return self.acreate_event(
+        event=action,
+        entity_type="pio_user",
+        entity_id=uid,
+        target_entity_type="pio_item",
+        target_entity_id=iid,
+        properties=properties,
+        event_time=event_time)
+
+  def record_user_action_on_item(self, action, uid, iid, properties={},
+      event_time=None):
+    """Create a user-to-item action."""
+    return self.arecord_user_action_on_item(
+      action, uid, iid, properties, event_time).get_response()
+
+
+class EngineClient(BaseClient):
+  """Client for extracting prediction results from an PredictionIO Engine
+  Instance.
+  
+  :param url: the url of the PredictionIO Engine Instance.
+  :param threads: number of threads to handle PredictionIO API requests.
+          Must be >= 1.
+  :param qsize: the max size of the request queue (optional).
+      The asynchronous request becomes blocking once this size has been
+      reached, until the queued requests are handled.
+      Default value is 0, which means infinite queue size.
+  :param timeout: timeout for HTTP connection attempts and requests in
+    seconds (optional).
+    Default value is 5.
+  
+  """
+  def __init__(self, url="http://localhost:8000", threads=1,
+      qsize=0, timeout=5):
+    super(EngineClient, self).__init__(url, threads, qsize, timeout)
+
+  def asend_query(self, data):
+    """Asynchronously send a request to the engine instance with data as the
+    query.
+
+    :param data: the query: It is coverted to an json object using json.dumps
+      method. type dict. 
 
     :returns:
-      None
-
-    :raises:
-      ItemNotDeletedError
+      AsyncRequest object. You can call the get_response() method using this
+      object to get the final resuls or status of this asynchronous request.
     """
-    if response.error is not None:
-      raise ItemNotDeletedError("Exception happened: %s for request %s" %
-                    (response.error, response.request))
-    elif response.status != httplib.OK:
-      raise ItemNotDeletedError("request: %s status: %s body: %s" %
-                    (response.request, response.status,
-                     response.body))
-    return None
-
-  def _aget_user_itemrec_topn(self, engine, uid, n, params={}):
-    """Private function to asynchronously get recommendations for user
-
-    :param engine: name of the prediction engine. type str.
-    :param uid: user id. type str.
-    :param n: number of recommendation. type int.
-    :param params: optional parameters. type dictionary
-        For example, { 'pio_itypes' : ("t1","t2") }
-    :returns:
-      AsyncRequest object. You should call the aresp() method using this
-      AsyncRequest object as argument to get the final result or status
-      of this asynchronous request.
-    """
-    if "pio_itypes" in params:
-      params["pio_itypes"] = ",".join(params["pio_itypes"])
-    if "pio_latlng" in params:
-      params["pio_latlng"] = ",".join(map(str, params["pio_latlng"]))
-    if "pio_attributes" in params:
-      params["pio_attributes"] = ",".join(params["pio_attributes"])
-
-    path = "%s/engines/itemrec/%s/topn.json" % (self.apiversion, engine)
-    request = AsyncRequest("GET", path, pio_appkey=self.appkey,
-                 pio_uid=uid, pio_n=n, **params)
-    request.set_rfunc(self._aget_user_itemrec_topn_resp)
+    path = "/queries.json"
+    request = AsyncRequest("POST", path, **data)
+    request.set_rfunc(self._aget_resp)
     self._connection.make_request(request)
     return request
 
-  def _aget_user_itemrec_topn_resp(self, response):
-    """Private function to handle the AsyncResponse of the aget_itemrec
-    request
+  def send_query(self, data):
+    """Synchronously send a request.
+    
+    :param data: the query: It is coverted to an json object using json.dumps
+      method. type dict. 
 
-    :param response: AsyncResponse object
-
-    :returns:
-      data in dictionary format.
-
-    :raises:
-      ItemRecNotFoundError.
+    :returns: the prediction.
     """
-    if response.error is not None:
-      raise ItemRecNotFoundError(
-        "Exception happened: %s for request %s" %
-        (response.error, response.request))
-    elif response.status != httplib.OK:
-      raise ItemRecNotFoundError("request: %s status: %s body: %s" %
-                    (response.request, response.status,
-                     response.body))
-
-    data = json.loads(response.body)  # convert json string to dict
-    return data
-
-  def aget_itemrec_topn(self, engine, n, params={}):
-    """Asynchronously get recommendations for the identified user
-
-    :param engine: name of the prediction engine. type str.
-    :param n: number of recommendation. type int.
-    :param params: optional parameters. type dictionary
-        For example, { 'pio_itypes' : ("t1",) }
-    :returns:
-      AsyncRequest object. You should call the aresp() method using this
-      AsyncRequest object as argument to get the final result or status
-      of this asynchronous request.
-    """
-
-    if self._uid is None:
-      raise InvalidArgumentError(
-        "uid is not identified. Please call identify(uid) first.")
-
-    request = self._aget_user_itemrec_topn(engine, self._uid, n, params)
-    return request
-
-  def aget_itemrec(self, uid, n, engine, **params):
-    """Deprecated. Asynchronously get recommendations
-
-    :param uid: user id. type str.
-    :param n: number of recommendation. type int.
-    :param engine: name of the prediction engine. type str.
-    :param params: keyword arguments for optional attributes.
-        For example, pio_latlng="123.4, 56.7"
-    :returns:
-      AsyncRequest object. You should call the aresp() method using this
-      AsyncRequest object as argument to get the final result or status
-      of this asynchronous request.
-    """
-    request = self._aget_user_itemrec_topn(engine, uid, n, params)
-    return request
-
-  def _aget_itemsim_topn(self, engine, iid, n, params={}):
-    """Private function to asynchronously get top n similar items of the
-    item
-
-    :param engine: name of the prediction engine. type str.
-    :param iid: item id. type str.
-    :param n: number of similar items. type int.
-    :param params: optional parameters. type dictionary
-        For example, { 'pio_itypes' : ("t1","t2") }
-    :returns:
-      AsyncRequest object. You should call the aresp() method using this
-      AsyncRequest object as argument to get the final result or status
-      of this asynchronous request.
-    """
-    if "pio_itypes" in params:
-      params["pio_itypes"] = ",".join(params["pio_itypes"])
-    if "pio_latlng" in params:
-      params["pio_latlng"] = ",".join(map(str, params["pio_latlng"]))
-    if "pio_attributes" in params:
-      params["pio_attributes"] = ",".join(params["pio_attributes"])
-
-    path = "%s/engines/itemsim/%s/topn.json" % (self.apiversion, engine)
-    request = AsyncRequest("GET", path, pio_appkey=self.appkey,
-                 pio_iid=iid, pio_n=n, **params)
-    request.set_rfunc(self._aget_itemsim_topn_resp)
-    self._connection.make_request(request)
-    return request
-
-  def _aget_itemsim_topn_resp(self, response):
-    """Private function to handle the AsyncResponse of the aget_itemsim
-    request
-
-    :param response: AsyncResponse object
-
-    :returns:
-      data in dictionary format.
-
-    :raises:
-      ItemSimNotFoundError.
-    """
-    if response.error is not None:
-      raise ItemSimNotFoundError(
-        "Exception happened: %s for request %s" %
-        (response.error, response.request))
-    elif response.status != httplib.OK:
-      raise ItemSimNotFoundError("request: %s status: %s body: %s" %
-                    (response.request, response.status,
-                     response.body))
-
-    data = json.loads(response.body)  # convert json string to dict
-    return data
-
-  def aget_itemsim_topn(self, engine, iid, n, params={}):
-    """Asynchronously get top n similar items of the item
-
-    :param engine: name of the prediction engine. type str.
-    :param iid: item id. type str.
-    :param n: number of similar items. type int.
-    :param params: optional parameters. type dictionary
-        For example, { 'pio_itypes' : ("t1",) }
-    :returns:
-      AsyncRequest object. You should call the aresp() method using this
-      AsyncRequest object as argument to get the final result or status
-      of this asynchronous request.
-    """
-
-    request = self._aget_itemsim_topn(engine, iid, n, params)
-    return request
-
-  def _aget_user_itemrank_ranked(self, engine, uid, iids, params={}):
-    """Private function to asynchronously get ranked item for user
-
-    :param engine: name of the prediction engine. type str.
-    :param uid: user id. type str.
-    :param iids: items to be ranked. type list of item ids.
-      For example, ["i0", "i1", "i2"]
-    :param params: optional parameters. type dictionary
-      For example. { 'pio_attributes' : "name" }
-    :returns:
-      AsyncRequest object. You should call the aresp() method using this
-      AsyncRequest object as argument to get the final result or status
-      of this asynchronous request.
-    """
-    if "pio_attributes" in params:
-      params["pio_attributes"] = ",".join(params["pio_attributes"])
-
-    pio_iids = ",".join(iids)
-
-    path = "%s/engines/itemrank/%s/ranked.json" % \
-      (self.apiversion, engine)
-    request = AsyncRequest("GET", path, pio_appkey=self.appkey,
-                           pio_uid=uid, pio_iids=pio_iids, **params)
-    request.set_rfunc(self._aget_user_itemrank_ranked_resp)
-    self._connection.make_request(request)
-    return request
-
-  def _aget_user_itemrank_ranked_resp(self, response):
-    """Private function to handle the AsyncResponse of the aget_itemreoder
-      request
-
-    :param response: AsyncResponse object
-
-    :returns:
-      data in dictionary format.
-
-    :raises:
-      ItemRankNotFoundError.
-    """
-    if response.error is not None:
-      raise ItemRankNotFoundError(
-        "Exception happened: %s for request %s" %
-        (response.error, response.request))
-    elif response.status != httplib.OK:
-      raise ItemRankNotFoundError("request: %s status: %s body: %s" %
-                                  (response.request, response.status,
-                                   response.body))
-
-    data = json.loads(response.body)  # convert json string to dict
-    return data
-
-  def aget_itemrank_ranked(self, engine, iids, params={}):
-    """Asynchronously get ranked item for user
-
-    :param engine: name of the prediction engine. type str.
-    :param iids: items to be ranked. type list of item ids.
-      For example, ["i0", "i1", "i2"]
-    :param params: optional parameters. type dictionary
-      For example. { 'pio_attributes' : "name" }
-    :returns:
-      AsyncRequest object. You should call the aresp() method using this
-      AsyncRequest object as argument to get the final result or status
-      of this asynchronous request.
-    """
-
-    if self._uid is None:
-      raise InvalidArgumentError(
-        "uid is not identified. Please call identify(uid) first.")
-
-    request = self._aget_user_itemrank_ranked(engine,
-      self._uid, iids, params)
-    return request
-
-  def _auser_action_on_item(self, action, uid, iid, params):
-    """Private function to asynchronously create an user action on an item
-
-    :param action: action type. type str. ("like", "dislike", "conversion",
-                         "rate", "view")
-    :param uid: user id. type str or int.
-    :param iid: item id. type str or int.
-    :param params: optional attributes. type dictionary.
-        For example, { 'pio_rate' : 4, 'pio_latlng' : [1.23,4.56] }
-        NOTE: For "rate" action, pio_rate attribute is required.
-            integer value of 1-5 (1 is least preferred and 5 is most
-            preferred)
-
-    :returns:
-      AsyncRequest object. You should call the aresp() method using this
-      AsyncRequest object as argument to get the final result or status
-      of this asynchronous request.
-    """
-    if "pio_latlng" in params:
-      params["pio_latlng"] = ",".join(map(str, params["pio_latlng"]))
-
-    path = "%s/actions/u2i.json" % (self.apiversion)
-    request = AsyncRequest("POST", path, pio_appkey=self.appkey,
-                 pio_action=action, pio_uid=uid, pio_iid=iid,
-                 **params)
-    request.set_rfunc(self._auser_action_on_item_resp)
-    self._connection.make_request(request)
-    return request
-
-  def _auser_action_on_item_resp(self, response):
-    """Private function to handle the AsyncResponse of the
-    _auser_action_on_item request
-
-    :param response: AsyncResponse object
-
-    :returns:
-      None
-
-    :raises:
-      U2IActionNotCreatedError
-    """
-    if response.error is not None:
-      raise U2IActionNotCreatedError(
-        "Exception happened: %s for request %s" %
-        (response.error, response.request))
-    elif response.status != httplib.CREATED:
-      raise U2IActionNotCreatedError("request: %s status: %s body: %s" %
-                       (response.request, response.status,
-                      response.body))
-    return None
-
-  def arecord_action_on_item(self, action, iid, params={}):
-    """Asynchronously create action on item
-
-    :param action: action name. type String. For example, "rate", "like",
-             etc
-    :param iid: item id. type str or int.
-    :param params: optional attributes. type dictionary.
-        For example, { 'pio_rate' : 4, 'pio_latlng': [4.5,67.8] }
-        NOTE: For "rate" action, pio_rate attribute is required.
-        integer value of 1-5 (1 is least preferred and 5 is most
-        preferred)
-
-    :returns:
-      AsyncRequest object. You should call the aresp() method using this
-      AsyncRequest object as argument to get the final result or status
-      of this asynchronous request.
-
-    :raises:
-      U2IActionNotCreatedError
-    """
-
-    if self._uid is None:
-      raise InvalidArgumentError(
-        "uid is not identified. Please call identify(uid) first.")
-
-    request = self._auser_action_on_item(action, self._uid, iid, params)
-    return request
-
-  def auser_conversion_item(self, uid, iid, **params):
-    """Deprecated. Asynchronously create an user conversion action on an
-    item
-
-    :param uid: user id. type str.
-    :param iid: item id. type str.
-    :param params: keyword arguments for optional attributes.
-        For example, pio_latlng=[123.4, 56.7]
-    :returns:
-      AsyncRequest object. You should call the aresp() method using this
-      AsyncRequest object as argument to get the final result or status
-      of this asynchronous request.
-    """
-    request = self._auser_action_on_item(CONVERSION_API, uid, iid, params)
-    return request
-
-  def auser_dislike_item(self, uid, iid, **params):
-    """Deprecated. Asynchronously create an user dislike action on an item
-
-    :param uid: user id. type str.
-    :param iid: item id. type str.
-    :param params: keyword arguments for optional attributes.
-        For example, pio_latlng=[123.4, 56.7]
-    :returns:
-      AsyncRequest object. You should call the aresp() method using this
-      AsyncRequest object as argument to get the final result or status
-      of this asynchronous request.
-    """
-    request = self._auser_action_on_item(DISLIKE_API, uid, iid, params)
-    return request
-
-  def auser_like_item(self, uid, iid, **params):
-    """Deprecated. Asynchronously create an user like action on an item
-
-    :param uid: user id. type str.
-    :param iid: item id. type str.
-    :param params: keyword arguments for optional attributes.
-        For example, pio_latlng=[123.4, 56.7]
-    :returns:
-      AsyncRequest object. You should call the aresp() method using this
-      AsyncRequest object as argument to get the final result or status
-      of this asynchronous request.
-    """
-    request = self._auser_action_on_item(LIKE_API, uid, iid, params)
-    return request
-
-  def auser_rate_item(self, uid, iid, rate, **params):
-    """Deprecated. Asynchronously create an user rate action on an item
-
-    :param uid: user id. type str.
-    :param iid: item id. type str.
-    :param rate: rating. integer value of 1-5 (1 is least preferred and 5
-           is most preferred)
-    :param params: keyword arguments for optional attributes.
-        For example, pio_latlng=[123.4, 56.7]
-    :returns:
-      AsyncRequest object. You should call the aresp() method using this
-      AsyncRequest object as argument to get the final result or status
-      of this asynchronous request.
-    """
-
-    params['pio_rate'] = rate
-    request = self._auser_action_on_item(RATE_API, uid, iid, params)
-    return request
-
-  def auser_view_item(self, uid, iid, **params):
-    """Deprecated. Asynchronously create an user view action on an item
-
-    :param uid: user id. type str.
-    :param iid: item id. type str.
-    :param params: keyword arguments for optional attributes.
-        For example, pio_latlng=[123.4, 56.7]
-    :returns:
-      AsyncRequest object. You should call the aresp() method using this
-      AsyncRequest object as argument to get the final result or status
-      of this asynchronous request.
-    """
-    request = self._auser_action_on_item(VIEW_API, uid, iid, params)
-    return request
-
-  def aresp(self, request):
-    """Get the result of the asynchronous request
-
-    :param request: AsyncRequest object. This object must be returned by
-            the asynchronous request function
-            For example, to get the result of a aget_user()
-            request, call this aresp() with the argument of
-            AsyncRequest object returned by aget_user().
-
-    :returns:
-      The result of this AsyncRequest. The return type is the same as
-      the return type of corresponding blocking request.
-
-      For example,
-
-      Calling aresp() with acreate_user() AsyncRequest returns the same
-      type as create_user(), which is None.
-
-      Calling aresp() with aget_user() AsyncRequest returns the same
-      type as get_user(), which is dictionary data.
-
-    :raises:
-      Exception may be raised if there is error happened. The type of
-      exception is the same as exception type of the correspdoning
-      blocking request.
-
-      For example,
-
-      Calling aresp() with acreate_user() AsyncRequest may raise
-      UserNotCreatedError exception.
-
-      Calling aresp() with aget_user() AsyncRequest may raise
-      UserNotFoundError exception.
-
-    """
-    response = request.get_response()
-    result = request.rfunc(response)
-    return result
-
-  def create_user(self, uid, params={}):
-    """Blocking request to create user
-
-    :param uid: user id. type str.
-    :param params: optional attributes. type dictionary.
-      For example, { 'custom': 'value', 'pio_inactive' : True,
-      'pio_latlng': [4.5,67.8] }
-
-    :returns:
-      None.
-
-    :raises:
-      UserNotCreatedError.
-
-    """
-    request = self.acreate_user(uid, params)
-    result = self.aresp(request)
-    return result
-
-  def get_user(self, uid):
-    """Blocking request to get user
-
-    :param uid: user id. type str or int.
-
-    :returns:
-      User data in Dictionary format.
-
-    :rasies:
-      UserNotFoundError.
-
-    """
-    request = self.aget_user(uid)
-    result = self.aresp(request)
-    return result
-
-  def delete_user(self, uid):
-    """Blocking request to delete the user
-
-    :param uid: user id. type str.
-
-    :returns:
-      None.
-
-    :raises:
-      UserNotDeletedError.
-
-    """
-    request = self.adelete_user(uid)
-    result = self.aresp(request)
-    return result
-
-  def create_item(self, iid, itypes, params={}):
-    """Blocking request to create item
-
-    :param iid: item id. type str.
-    :param itypes: item types. Tuple of Str.
-        For example, if this item belongs to item types "t1", "t2",
-        "t3", "t4", then itypes=("t1", "t2", "t3", "t4").
-        NOTE: if this item belongs to only one itype, use tuple of one
-        element, eg. itypes=("t1",)
-    :param params: optional attributes. type dictionary.
-        For example,
-        { 'custom': 'value', 'pio_inactive' : True,
-        'pio_latlng': [4.5,67.8] }
-
-    :returns:
-      None
-
-    :raises:
-      ItemNotCreatedError
-
-    """
-    request = self.acreate_item(iid, itypes, params)
-    result = self.aresp(request)
-    return result
-
-  def get_item(self, iid):
-    """Blocking request to get item
-
-    :param iid: item id. type str.
-
-    :returns:
-      item data in dictionary format.
-
-    :raises:
-      ItemNotFoundError.
-
-    """
-    request = self.aget_item(iid)
-    result = self.aresp(request)
-    return result
-
-  def delete_item(self, iid):
-    """Blocking request to delete item
-
-    :param iid: item id. type str.
-
-    :returns:
-      None
-
-    :raises:
-      ItemNotDeletedError
-
-    """
-    request = self.adelete_item(iid)
-    result = self.aresp(request)
-    return result
-
-  def get_itemrec_topn(self, engine, n, params={}):
-    """Blocking request to get recommendations for the identified user
-
-    :param engine: name of the prediction engine. type str.
-    :param n: number of recommendation. type int.
-    :param params: optional parameters. type dictionary
-        For example, { 'pio_itypes' : ("t1", "t2") }
-    :returns:
-      data in dictionary format.
-
-    :raises:
-      ItemRecNotFoundError.
-    """
-    request = self.aget_itemrec_topn(engine, n, params)
-    result = self.aresp(request)
-    return result
-
-  def get_itemrec(self, uid, n, engine, **params):
-    """Deprecated. Blocking request to get recommendations
-
-    :param uid: user id. type str or int.
-    :param n: number of recommendation. type int.
-    :param engine: name of the prediction engine. type str.
-    :param params: keyword arguments for optional attributes.
-        For example, pio_latlng=[123.4, 56.7]
-
-    :returns:
-      data in dictionary format.
-
-    :raises:
-      ItemRecNotFoundError.
-
-    """
-    request = self.aget_itemrec(uid, n, engine, **params)
-    result = self.aresp(request)
-    return result
-
-  def get_itemsim_topn(self, engine, iid, n, params={}):
-    """Blocking request to get top n similar items of the item
-
-    :param engine: name of the prediction engine. type str.
-    :param iid: item id. type str.
-    :param n: number of similar items. type int.
-    :param params: optional parameters. type dictionary
-        For example, { 'pio_itypes' : ("t1",) }
-    :returns:
-      data in dictionary format.
-
-    :raises:
-      ItemSimNotFoundError.
-    """
-
-    request = self.aget_itemsim_topn(engine, iid, n, params)
-    result = self.aresp(request)
-    return result
-
-  def get_itemrank_ranked(self, engine, iids, params={}):
-    """Blocking request to get ranked item for user
-
-    :param engine: name of the prediction engine. type str.
-    :param iids: items to be ranked. type list of item ids.
-        For example, ["i0", "i1", "i2"]
-    :param params: optional parameters. type dictionary
-        For example. { 'pio_attributes' : "name" }
-    :returns:
-      data in dictionary format.
-
-    :raises:
-      ItemRankNotFoundError.
-    """
-    request = self.aget_itemrank_ranked(engine, iids, params)
-    result = self.aresp(request)
-    return result
-
-  def record_action_on_item(self, action, iid, params={}):
-    """Blocking request to create action on an item
-
-    :param action: action name. type String. For example, "rate", "like",
-             etc
-    :param iid: item id. type str.
-    :param params: optional attributes. type dictionary.
-        For example, { 'pio_rate' : 4, 'pio_latlng' : [1.23,4.56] }
-        NOTE: For "rate" action, pio_rate attribute is required.
-        integer value of 1-5 (1 is least preferred and 5 is most
-        preferred)
-
-    :returns:
-      None
-
-    :raises:
-      U2IActionNotCreatedError
-    """
-    request = self.arecord_action_on_item(action, iid, params)
-    result = self.aresp(request)
-    return result
-
-  def user_conversion_item(self, uid, iid, **params):
-    """Deprecated. Blocking request to create user conversion action on an
-     item
-
-    :param uid: user id. type str.
-    :param iid: item id. type str.
-    :param params: keyword arguments for optional attributes.
-        For example, pio_latlng=[123.4, 56.7]
-
-    :returns:
-      None
-
-    :raises:
-      U2IActionNotCreatedError
-    """
-    request = self.auser_conversion_item(uid, iid, **params)
-    result = self.aresp(request)
-    return result
-
-  def user_dislike_item(self, uid, iid, **params):
-    """Deprecated. Blocking request to create user dislike action on an
-     item
-
-    :param uid: user id. type str.
-    :param iid: item id. type str.
-    :param params: keyword arguments for optional attributes.
-        For example, pio_latlng=[123.4, 56.7]
-
-    :returns:
-      None
-
-    :raises:
-      U2IActionNotCreatedError
-    """
-    request = self.auser_dislike_item(uid, iid, **params)
-    result = self.aresp(request)
-    return result
-
-  def user_like_item(self, uid, iid, **params):
-    """Deprecated. Blocking request to create user like action on an item
-
-    :param uid: user id. type str.
-    :param iid: item id. type str.
-    :param params: keyword arguments for optional attributes.
-        For example, pio_latlng=[123.4, 56.7]
-
-    :returns:
-      None
-
-    :raises:
-      U2IActionNotCreatedError
-    """
-    request = self.auser_like_item(uid, iid, **params)
-    result = self.aresp(request)
-    return result
-
-  def user_rate_item(self, uid, iid, rate, **params):
-    """Deprecated. Blocking request to create user rate action on an item
-
-    :param uid: user id. type str.
-    :param iid: item id. type str.
-    :param rate: rating. integer value of 1-5 (1 is least preferred and 5
-           is most preferred)
-    :param params: keyword arguments for optional attributes.
-        For example, pio_latlng=[123.4, 56.7]
-
-    :returns:
-      None
-
-    :raises:
-      U2IActionNotCreatedError
-    """
-    request = self.auser_rate_item(uid, iid, rate, **params)
-    result = self.aresp(request)
-    return result
-
-  def user_view_item(self, uid, iid, **params):
-    """Deprecated. Blocking request to create user view action on an item
-
-    :param uid: user id. type str.
-    :param iid: item id. type str.
-    :param params: keyword arguments for optional attributes.
-        For example, pio_latlng=[123.4, 56.7]
-
-    :returns:
-      None
-
-    :raises:
-      U2IActionNotCreatedError
-    """
-    request = self.auser_view_item(uid, iid, **params)
-    result = self.aresp(request)
-    return result
+    return self.asend_query(data).get_response()
