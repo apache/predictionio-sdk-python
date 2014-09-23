@@ -177,8 +177,11 @@ class EventClient(BaseClient):
     if properties is not None:
       data["properties"] = properties
 
-    event_time = event_time_validation(event_time)
-    data["eventTime"] = event_time.isoformat()
+    et = event_time_validation(event_time)
+    # EventServer uses milliseconds, but python datetime class uses micro. Hence
+    # need to skip the last three digits.
+    et_str = et.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + et.strftime("%z")
+    data["eventTime"] = et_str
     
     path = "/events.json"
     request = AsyncRequest("POST", path, **data)
