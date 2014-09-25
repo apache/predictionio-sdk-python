@@ -1,29 +1,35 @@
-from distutils.core import setup
+try:
+  from setuptools import setup
+except ImportError:
+  from distutils.core import setup
 
-from predictionio import __version__
-from predictionio import __author__
-from predictionio import __email__
+__author__ = "The PredictionIO Team"
+__email__ = "help@tappingstone.com"
+__copyright__ = "Copyright 2014, TappingStone, Inc."
+__license__ = "Apache License, Version 2.0"
 
-setup(name='PredictionIO',
-      version=__version__,
-      author=__author__,
-      author_email=__email__,
-      packages=['predictionio'],
-      url='http://prediction.io',
-      license='LICENSE.txt',
-      description='PredictionIO Python SDK',
-      classifiers=['Programming Language :: Python',
-                   'License :: OSI Approved :: Apache Software License',
-                   'Operating System :: OS Independent',
-                   'Development Status :: 4 - Beta',
-                   'Intended Audience :: Developers',
-                   'Intended Audience :: Science/Research',
-                   'Environment :: Web Environment',
-                   'Topic :: Internet :: WWW/HTTP',
-                   'Topic :: Scientific/Engineering :: Artificial Intelligence',
-                   'Topic :: Scientific/Engineering :: Information Analysis',
-                   'Topic :: Software Development :: Libraries :: Python Modules'],
-      long_description="""PredictionIO Python SDK
+setup(
+    name='PredictionIO',
+    version="0.8.0",
+    author=__author__,
+    author_email=__email__,
+    packages=['predictionio'],
+    url='http://prediction.io',
+    license='LICENSE.txt',
+    description='PredictionIO Python SDK',
+    classifiers=[
+      'Programming Language :: Python',
+      'License :: OSI Approved :: Apache Software License',
+      'Operating System :: OS Independent',
+      'Development Status :: 4 - Beta',
+      'Intended Audience :: Developers',
+      'Intended Audience :: Science/Research',
+      'Environment :: Web Environment',
+      'Topic :: Internet :: WWW/HTTP',
+      'Topic :: Scientific/Engineering :: Artificial Intelligence',
+      'Topic :: Scientific/Engineering :: Information Analysis',
+      'Topic :: Software Development :: Libraries :: Python Modules'],
+    long_description="""PredictionIO Python SDK
 
                        PredictionIO is a prediction server for building smart
                        applications. While you search data through a database
@@ -43,5 +49,6 @@ setup(name='PredictionIO',
                        This module provides convenient access of the
                        PredictionIO API to Python programmers so that they
                        can focus on their application logic.
-                       """
-      )
+                       """,
+    install_requires=["pytz >= 2014.2",],
+    )

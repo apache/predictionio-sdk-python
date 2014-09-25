@@ -4,10 +4,6 @@ The PredictoinIO Python SDK provides easy-to-use functions for integrating
 Python applications with PredictionIO REST API services.
 """
 
-__author__ = "The PredictionIO Team"
-__email__ = "help@tappingstone.com"
-__copyright__ = "Copyright 2014, TappingStone, Inc."
-__license__ = "Apache License, Version 2.0"
 
 __version__ = "0.8.0"
 
