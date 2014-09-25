@@ -1,4 +1,4 @@
-PredictionIO Python SDK Example - MoveLens
+PredictionIO Python SDK Example - MovieLens
 ==========================================
 
 Please execute all commands from repository root.

@@ -26,7 +26,7 @@ first_event_response = client.create_event(
     entity_type="user",
     entity_id="uid",
     properties=first_event_properties,
-    first_event_time=first_event_time,
+    event_time=first_event_time,
     )
 print("First Event response")
 print(first_event_response)
