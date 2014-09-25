@@ -5,7 +5,7 @@ Python applications with PredictionIO REST API services.
 """
 
 
-__version__ = "0.8.0"
+__version__ = "0.8.1"
 
 # import deprecated libraries.
 from predictionio.obsolete import Client
