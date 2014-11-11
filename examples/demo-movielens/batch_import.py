@@ -23,6 +23,7 @@ def batch_import_task(app_id, app_data, client, all_info=False):
   print "[Info] Importing users to PredictionIO..."
   user_create_time = datetime.datetime.fromtimestamp(0, tz=pytz.utc)
   count = 0
+  set_user_request_list = []
   for k, v in app_data.get_users().iteritems():
     count += 1
     if all_info:
@@ -32,18 +33,20 @@ def batch_import_task(app_id, app_data, client, all_info=False):
         sys.stdout.write('\r[Info] %s' % count)
         sys.stdout.flush()
 
-    client.aset_user(
-        uid=v.uid,
-        event_time=user_create_time)
+    set_user_request_list.append(
+        client.aset_user(uid=v.uid, event_time=user_create_time))
 
+  [r.get_response() for r in set_user_request_list]
   sys.stdout.write('\r[Info] %s users were imported.\n' % count)
   sys.stdout.flush()
 
   print "[Info] Importing items to PredictionIO..."
   count = 0
+  set_item_request_list = []
   # event_time is a datetime, hence need to add a time component to the release
   # date.
   midnight_utc = datetime.time(0, 0, 0, tzinfo=pytz.utc)
+  epoch = datetime.datetime.fromtimestamp(0, tz=pytz.utc)
   for k, v in app_data.get_items().iteritems():
     count += 1
     if all_info:
@@ -59,20 +62,29 @@ def batch_import_task(app_id, app_data, client, all_info=False):
         v.release_date,
         midnight_utc)
 
-    client.aset_item(
+    # event_time must be after epoch.
+    event_time = release_datetime if release_datetime > epoch else epoch
+
+    utf8_name = v.name.decode('utf-8', 'ignore')
+    
+    set_item_request = client.aset_item(
         iid=v.iid,
-        event_time=release_datetime,
+        event_time=event_time,
         properties={ 
           "pio_itypes": list(itypes),
           "pio_starttime": release_datetime.isoformat(),
-          "name": v.name,
+          "name": utf8_name,
           "year": v.year } )
 
+    set_item_request_list.append(set_item_request)
+
+  [r.get_response() for r in set_item_request_list]
   sys.stdout.write('\r[Info] %s items were imported.\n' % count)
   sys.stdout.flush()
 
   print "[Info] Importing rate actions to PredictionIO..."
   count = 0
+  create_event_request_list = []
   for v in app_data.get_rate_actions():
     count += 1
     if all_info:
@@ -93,6 +105,9 @@ def batch_import_task(app_id, app_data, client, all_info=False):
         event_time=v.t.replace(tzinfo=pytz.utc),
         )
 
+    create_event_request_list.append(req)
+
+  [r.get_response() for r in create_event_request_list]
   sys.stdout.write('\r[Info] %s rate actions were imported.\n' % count)
   sys.stdout.flush()
 
