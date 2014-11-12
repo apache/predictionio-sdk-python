@@ -11,6 +11,6 @@ $ unzip ml-100k.zip
 
 Step 2. Run this app:
 ```
-$ python -m examples.demo-movielens.batch_import <app_id> <server_url>
+$ python -m examples.demo-movielens.batch_import <access_key> <server_url>
 ```
 

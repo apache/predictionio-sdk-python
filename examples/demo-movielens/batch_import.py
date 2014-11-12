@@ -5,7 +5,7 @@ import sys
 import pytz
 import datetime
 
-def batch_import_task(app_id, app_data, client, all_info=False):
+def batch_import_task(app_data, client, all_info=False):
   # event_time is an important properties used by the PredictionIO platform. It
   # is particularly useful in generating training and testing set, which uses
   # event_time for splitting. Hence, when we import data, better to make the
@@ -115,12 +115,12 @@ def batch_import_task(app_id, app_data, client, all_info=False):
 if __name__ == '__main__':
   if len(sys.argv) < 3:
     sys.exit("Usage: python -m examples.demo-movielens.batch_import "
-        "<app_id> <url>")
+        "<access_key> <url>")
 
-  app_id = int(sys.argv[1])
+  access_key = sys.argv[1]
 
   client = predictionio.EventClient(
-      app_id=app_id,
+      access_key=access_key,
       url=sys.argv[2],
       threads=5,
       qsize=500)
@@ -129,5 +129,5 @@ if __name__ == '__main__':
   print "Status:", client.get_status()
   
   app_data = AppData()
-  batch_import_task(app_id, app_data, client)
+  batch_import_task(app_data, client)
   client.close()

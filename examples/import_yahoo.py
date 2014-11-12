@@ -2,13 +2,14 @@
 Import historical stock data from yahoo finance.
 """
 
-import argparse
 from datetime import datetime
+from pandas.io import data as pdata
+import argparse
+import numpy
 import predictionio
 import pytz
+import sys
 import time
-from pandas.io import data as pdata
-import numpy
 
 EPOCH = datetime(1970, 1, 1, tzinfo=pytz.utc)
 
@@ -70,7 +71,7 @@ def since_epoch(dt):
   return (dt - EPOCH).total_seconds()
 
 
-def import_data(client, app_id, ticker, start_time, end_time, event_time):
+def import_data(client, access_key, ticker, start_time, end_time, event_time):
   print "Importing:", ticker, start_time, end_time
 
   try:
@@ -114,7 +115,7 @@ def import_data(client, app_id, ticker, start_time, end_time, event_time):
   print(response)
 
 
-def import_all(app_id):
+def import_all(access_key):
   """This method import all SP500 stocks and some SPDR ETFs."""
   time_slices = [
       (datetime(1999, 1, 1), datetime(2004, 1, 1), datetime(2004, 1, 2)),
@@ -123,17 +124,17 @@ def import_all(app_id):
       ]
 
   url = 'http://localhost:7070'
-  client = predictionio.EventClient(app_id=app_id, threads=1, url=url)
+  client = predictionio.EventClient(access_key=access_key, threads=1, url=url)
 
   tickers = SP500_LIST + ETF_LIST 
 
   for ticker in tickers:
     for time_slice in time_slices:
-      import_data(client, app_id, ticker, 
+      import_data(client, access_key, ticker, 
           time_slice[0], time_slice[1], time_slice[2])
 
 
-def import_data_with_gaps(app_id):
+def import_data_with_gaps(access_key):
   """This method import data with time gaps. 
   
   Data imported by this method is used by stock engine, it demonsrates how it
@@ -154,11 +155,11 @@ def import_data_with_gaps(app_id):
   tickers = ['SPY', 'AAPL', 'IBM', 'MSFT']
  
   url = 'http://localhost:7070'
-  client = predictionio.EventClient(app_id=app_id, threads=1, url=url)
+  client = predictionio.EventClient(access_key=access_key, threads=1, url=url)
 
   for ticker in tickers:
     for time_slice in time_slices:
-      import_data(client, app_id, ticker, 
+      import_data(client, access_key, ticker, 
           time_slice[0], time_slice[1], time_slice[2])
 
   # below are data with holes
@@ -171,7 +172,7 @@ def import_data_with_gaps(app_id):
   tickers = ['AMZN']
   for ticker in tickers:
     for time_slice in time_slices:
-      import_data(client, app_id, ticker, 
+      import_data(client, access_key, ticker, 
           time_slice[0], time_slice[1], time_slice[2])
 
   time_slices = [
@@ -181,11 +182,11 @@ def import_data_with_gaps(app_id):
   tickers = ['FB']
   for ticker in tickers:
     for time_slice in time_slices:
-      import_data(client, app_id, ticker, 
+      import_data(client, access_key, ticker, 
           time_slice[0], time_slice[1], time_slice[2])
 
 
-def import_one(app_id):
+def import_one(access_key):
   """Import TSLA.
   
   Import data with from 2014-01-01 until 2014-03-01. event_time specifies when
@@ -197,12 +198,16 @@ def import_one(app_id):
   ticker = 'TSLA'
  
   url = 'http://localhost:7070'
-  client = predictionio.EventClient(app_id=app_id, threads=1, url=url)
+  client = predictionio.EventClient(access_key=access_key, threads=1, url=url)
 
-  import_data(client, app_id, ticker, start_time, end_time, event_time)
+  import_data(client, access_key, ticker, start_time, end_time, event_time)
 
 
 if __name__ == '__main__':
-  #import_all(app_id=2)
-  import_data_with_gaps(app_id=1)
-  #import_one(app_id=1)
+  if len(sys.argv) < 2:
+    sys.exit("Usage: python -m examples.import_yahoo <access_key>")
+
+  access_key = sys.argv[1]
+  import_all(access_key=access_key)
+  #import_data_with_gaps(access_key=access_key)
+  #import_one(access_key=access_key)
