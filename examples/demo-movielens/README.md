@@ -5,7 +5,7 @@ Please execute all commands from repository root.
 
 Step 1. Get sample data and unzip it.
 ```
-$ curl -o ml-100k.zip http://www.grouplens.org/system/files/ml-100k.zip
+$ curl -o ml-100k.zip http://files.grouplens.org/datasets/movielens/ml-100k.zip
 $ unzip ml-100k.zip
 ```
 
