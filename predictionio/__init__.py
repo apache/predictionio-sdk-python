@@ -5,7 +5,7 @@ Python applications with PredictionIO REST API services.
 """
 
 
-__version__ = "0.8.1"
+__version__ = "0.8.2"
 
 # import deprecated libraries.
 from predictionio.obsolete import Client
@@ -151,7 +151,10 @@ class BaseClient(object):
 class EventClient(BaseClient):
   """Client for importing data into PredictionIO Event Server.
 
-  :param app_id: the id used to identify application data.
+  Notice that app_id has been deprecated as of 0.8.2. Please use access_token
+  instead.
+
+  :param access_key: the access key for your application.
   :param url: the url of PredictionIO Event Server.
   :param threads: number of threads to handle PredictionIO API requests.
           Must be >= 1.
@@ -162,13 +165,24 @@ class EventClient(BaseClient):
   :param timeout: timeout for HTTP connection attempts and requests in
     seconds (optional).
     Default value is 5.
-
   """
 
-  def __init__(self, app_id, url="http://localhost:7070",
+  def __init__(self, access_key, 
+      url="http://localhost:7070",
       threads=1, qsize=0, timeout=5):
+    assert type(access_key) is str, ("access_key must be string. "
+        "Notice that app_id has been deprecated in Prediction.IO 0.8.2. "
+        "Please use access_key instead.")
+
     super(EventClient, self).__init__(url, threads, qsize, timeout)
-    self.app_id = app_id
+
+    if len(access_key) <= 8:
+      raise DeprecationWarning(
+          "It seems like you are specifying an app_id. It is deprecated in "
+          "Prediction.IO 0.8.2. Please use access_key instead. Or, "
+          "you may use an earlier version of this sdk.")
+
+    self.access_key = access_key
 
   def acreate_event(self, event, entity_type, entity_id,
       target_entity_type=None, target_entity_id=None, properties=None,
@@ -194,7 +208,6 @@ class EventClient(BaseClient):
       object to get the final resuls or status of this asynchronous request.
     """
     data = {
-        "appId": self.app_id,
         "event": event,
         "entityType": entity_type,
         "entityId": entity_id,
@@ -215,7 +228,7 @@ class EventClient(BaseClient):
     et_str = et.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + et.strftime("%z")
     data["eventTime"] = et_str
     
-    path = "/events.json"
+    path = "/events.json?accessKey=" + self.access_key
     request = AsyncRequest("POST", path, **data)
     request.set_rfunc(self._acreate_resp)
     self._connection.make_request(request)

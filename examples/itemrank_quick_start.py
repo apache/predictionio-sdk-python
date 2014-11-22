@@ -5,12 +5,13 @@ itemrank quickstart import data
 import predictionio
 
 import random
+import sys
 
-def import_itemrank(app_id):
+def import_itemrank(access_key):
 
   random.seed()
   
-  client = predictionio.EventClient(app_id=app_id)
+  client = predictionio.EventClient(access_key)
 
   print client.get_status()
   
@@ -39,4 +40,6 @@ def import_itemrank(app_id):
 
 
 if __name__ == '__main__':
-  import_itemrank(7)
+  if len(sys.argv) < 2:
+    sys.exit("Usage: python -m examples.itemrank_quick_start <access_key>")
+  import_itemrank(sys.argv[1])

@@ -4,7 +4,10 @@ from datetime import datetime
 import pytz
 import sys
 
-client = EventClient(app_id=4, url="http://localhost:7070")
+access_key = None
+assert access_key is not None, "Please create an access key with 'pio app new'"
+
+client = EventClient(access_key=access_key, url="http://localhost:7070")
 
 # Check status
 print("Check status")
