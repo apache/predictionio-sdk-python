@@ -172,7 +172,7 @@ class EventClient(BaseClient):
       threads=1, qsize=0, timeout=5):
     assert type(access_key) is str, ("access_key must be string. "
         "Notice that app_id has been deprecated in Prediction.IO 0.8.2. "
-        "Please use access_key instead")
+        "Please use access_key instead.")
 
     super(EventClient, self).__init__(url, threads, qsize, timeout)
 

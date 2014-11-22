@@ -10,7 +10,7 @@ The SDK comprises of two clients:
    and extract prediction results.
 
 Please read `PredictionIO Quick Start
-<http://docs.prediction.io/0.8.0/tutorials/engines/quickstart.html>`_ for
+<http://docs.prediction.io/0.8.2/recommendation/quickstart.html>`_ for
 detailed explanation.
 
 predictionio.EventClient Class
@@ -104,7 +104,7 @@ status at a later time to minimize run time.
 For example, to import 100000 of user records::
 
   >>> # generate 100000 asynchronous requests and store the AsyncRequest objects
-  >>> event_client = EventClient(app_id=1)
+  >>> event_client = EventClient(access_key=<YOUR_ACCESS_KEY>)
   >>> for i in range(100000):
   >>>   event_client.aset_user(user_record[i].uid)
   >>>
