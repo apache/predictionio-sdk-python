@@ -228,7 +228,7 @@ class EventClient(BaseClient):
     et_str = et.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + et.strftime("%z")
     data["eventTime"] = et_str
     
-    path = "/events.json?accessKey=" + self.access_key
+    path = "/events.json?accessKey=%s" % (self.access_key, )
     request = AsyncRequest("POST", path, **data)
     request.set_rfunc(self._acreate_resp)
     self._connection.make_request(request)
@@ -253,7 +253,7 @@ class EventClient(BaseClient):
     """
     enc_event_id = urllib.quote(event_id, "") # replace special char with %xx
     path = "/events/%s.json" % enc_event_id
-    request = AsyncRequest("GET", path)
+    request = AsyncRequest("GET", path, accessKey=self.access_key)
     request.set_rfunc(self._aget_resp)
     self._connection.make_request(request)
     return request
@@ -272,8 +272,8 @@ class EventClient(BaseClient):
       AsyncRequest object. 
     """
     enc_event_id = urllib.quote(event_id, "") # replace special char with %xx
-    path = "/events/%s.json" % enc_event_id
-    request = AsyncRequest("DELETE", path)
+    path = "/events/%s.json" % (enc_event_id, )
+    request = AsyncRequest("DELETE", path, accessKey=self.access_key)
     request.set_rfunc(self._adelete_resp)
     self._connection.make_request(request)
     return request
