@@ -71,8 +71,8 @@ def batch_import_task(app_data, client, all_info=False):
         iid=v.iid,
         event_time=event_time,
         properties={ 
-          "pio_itypes": list(itypes),
-          "pio_starttime": release_datetime.isoformat(),
+          "itypes": list(itypes),
+          "starttime": release_datetime.isoformat(),
           "name": utf8_name,
           "year": v.year } )
 
@@ -94,12 +94,12 @@ def batch_import_task(app_data, client, all_info=False):
         sys.stdout.write('\r[Info] %s' % count)
         sys.stdout.flush()
 
-    properties = { "pio_rating" : int(v.rating) }
+    properties = { "rating" : int(v.rating) }
     req = client.acreate_event(
         event="rate",
-        entity_type="pio_user",
+        entity_type="user",
         entity_id=v.uid,
-        target_entity_type="pio_item",
+        target_entity_type="item",
         target_entity_id=v.iid,
         properties=properties,
         event_time=v.t.replace(tzinfo=pytz.utc),

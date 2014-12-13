@@ -5,7 +5,7 @@ Python applications with PredictionIO REST API services.
 """
 
 
-__version__ = "0.8.2"
+__version__ = "0.8.3"
 
 # import deprecated libraries.
 from predictionio.obsolete import Client
@@ -288,11 +288,11 @@ class EventClient(BaseClient):
     """Set properties of a user.
    
     Wrapper of acreate_event function, setting event to "$set" and entity_type
-    to "pio_user".
+    to "user".
     """
     return self.acreate_event(
       event="$set",
-      entity_type="pio_user",
+      entity_type="user",
       entity_id=uid,
       properties=properties,
       event_time=event_time,
@@ -306,12 +306,12 @@ class EventClient(BaseClient):
     """Unset properties of an user.
    
     Wrapper of acreate_event function, setting event to "$unset" and entity_type
-    to "pio_user".
+    to "user".
     """
     # check properties={}, it cannot be empty
     return self.acreate_event(
         event="$unset",
-        entity_type="pio_user",
+        entity_type="user",
         entity_id=uid,
         properties=properties,
         event_time=event_time,
@@ -325,11 +325,11 @@ class EventClient(BaseClient):
     """Delete a user.
    
     Wrapper of acreate_event function, setting event to "$delete" and entity_type
-    to "pio_user".
+    to "user".
     """
     return self.acreate_event(
         event="$delete",
-        entity_type="pio_user",
+        entity_type="user",
         entity_id=uid,
         event_time=event_time)
 
@@ -341,11 +341,11 @@ class EventClient(BaseClient):
     """Set properties of an item.
    
     Wrapper of acreate_event function, setting event to "$set" and entity_type
-    to "pio_item".
+    to "item".
     """
     return self.acreate_event(
         event="$set",
-        entity_type="pio_item",
+        entity_type="item",
         entity_id=iid,
         properties=properties,
         event_time=event_time)
@@ -358,11 +358,11 @@ class EventClient(BaseClient):
     """Unset properties of an item.
    
     Wrapper of acreate_event function, setting event to "$unset" and entity_type
-    to "pio_item".
+    to "item".
     """
     return self.acreate_event(
         event="$unset",
-        entity_type="pio_item",
+        entity_type="item",
         entity_id=iid,
         properties=properties,
         event_time=event_time)
@@ -375,11 +375,11 @@ class EventClient(BaseClient):
     """Delete an item.
    
     Wrapper of acreate_event function, setting event to "$delete" and entity_type
-    to "pio_item".
+    to "item".
     """
     return self.acreate_event(
         event="$delete",
-        entity_type="pio_item",
+        entity_type="item",
         entity_id=iid,
         event_time=event_time)
 
@@ -391,14 +391,14 @@ class EventClient(BaseClient):
       event_time=None):
     """Create a user-to-item action.
 
-    Wrapper of acreate_event function, setting entity_type to "pio_user" and
-    target_entity_type to "pio_item".
+    Wrapper of acreate_event function, setting entity_type to "user" and
+    target_entity_type to "item".
     """
     return self.acreate_event(
         event=action,
-        entity_type="pio_user",
+        entity_type="user",
         entity_id=uid,
-        target_entity_type="pio_item",
+        target_entity_type="item",
         target_entity_id=iid,
         properties=properties,
         event_time=event_time)

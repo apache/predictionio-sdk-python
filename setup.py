@@ -10,7 +10,7 @@ __license__ = "Apache License, Version 2.0"
 
 setup(
     name='PredictionIO',
-    version="0.8.2",
+    version="0.8.3",
     author=__author__,
     author_email=__email__,
     packages=['predictionio'],
