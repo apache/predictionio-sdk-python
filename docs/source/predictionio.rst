@@ -10,7 +10,7 @@ The SDK comprises of two clients:
    and extract prediction results.
 
 Please read `PredictionIO Quick Start
-<http://docs.prediction.io/0.8.2/recommendation/quickstart.html>`_ for
+<http://docs.prediction.io/0.8.3/recommendation/quickstart.html>`_ for
 detailed explanation.
 
 predictionio.EventClient Class

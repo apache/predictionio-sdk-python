@@ -27,7 +27,7 @@ def import_itemrank(access_key):
   for item_id in item_ids:
     print "Set item", item_id
     client.set_item(item_id, {
-      "pio_itypes" : ['1']
+      "itypes" : ['1']
     })
   
   # each user randomly views 10 items
