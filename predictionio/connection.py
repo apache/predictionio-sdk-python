@@ -153,7 +153,7 @@ class AsyncResponse(object):
     # Try to extract the json.
     try:
       self.json_body = json.loads(body)
-    except ValueError, ex:
+    except ValueError as ex:
       self.json_body = None
 
   def set_error(self, error):
