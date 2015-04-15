@@ -18,6 +18,13 @@ except ImportError:
   # pylint: disable=F0401
   # http is a Python3 module, replacing httplib
   from http import client as httplib
+
+try:
+  from urllib import urlencode
+except ImportError:
+  # pylint: disable=F0401,E0611
+  from urllib.parse import urlencode
+
 import json
 import urllib
 
@@ -165,11 +172,12 @@ class EventClient(BaseClient):
   :param timeout: timeout for HTTP connection attempts and requests in
     seconds (optional).
     Default value is 5.
+  :param channel: channel name (optional)
   """
 
   def __init__(self, access_key,
       url="http://localhost:7070",
-      threads=1, qsize=0, timeout=5):
+      threads=1, qsize=0, timeout=5, channel=None):
     assert type(access_key) is str, ("access_key must be string. "
         "Notice that app_id has been deprecated in Prediction.IO 0.8.2. "
         "Please use access_key instead.")
@@ -183,6 +191,7 @@ class EventClient(BaseClient):
           "you may use an earlier version of this sdk.")
 
     self.access_key = access_key
+    self.channel = channel
 
   def acreate_event(self, event, entity_type, entity_id,
       target_entity_type=None, target_entity_id=None, properties=None,
@@ -228,7 +237,15 @@ class EventClient(BaseClient):
     et_str = et.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + et.strftime("%z")
     data["eventTime"] = et_str
 
-    path = "/events.json?accessKey=%s" % (self.access_key, )
+    qparam = {
+        "accessKey" : self.access_key
+        }
+
+    if self.channel is not None:
+      qparam["channel"] = self.channel
+
+    path = "/events.json?%s" % (urlencode(qparam), )
+
     request = AsyncRequest("POST", path, **data)
     request.set_rfunc(self._acreate_resp)
     self._connection.make_request(request)
@@ -251,9 +268,16 @@ class EventClient(BaseClient):
     :returns:
       AsyncRequest object.
     """
+    qparam = {
+        "accessKey" : self.access_key
+        }
+
+    if self.channel is not None:
+      qparam["channel"] = self.channel
+
     enc_event_id = urllib.quote(event_id, "") # replace special char with %xx
-    path = "/events/%s.json" % enc_event_id
-    request = AsyncRequest("GET", path, accessKey=self.access_key)
+    path = "/events/%s.json" % (enc_event_id, )
+    request = AsyncRequest("GET", path, **qparam)
     request.set_rfunc(self._aget_resp)
     self._connection.make_request(request)
     return request
@@ -271,9 +295,16 @@ class EventClient(BaseClient):
     :returns:
       AsyncRequest object.
     """
+    qparam = {
+        "accessKey" : self.access_key
+        }
+
+    if self.channel is not None:
+      qparam["channel"] = self.channel
+
     enc_event_id = urllib.quote(event_id, "") # replace special char with %xx
     path = "/events/%s.json" % (enc_event_id, )
-    request = AsyncRequest("DELETE", path, accessKey=self.access_key)
+    request = AsyncRequest("DELETE", path, **qparam)
     request.set_rfunc(self._adelete_resp)
     self._connection.make_request(request)
     return request
