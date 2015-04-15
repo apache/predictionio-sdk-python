@@ -5,7 +5,7 @@ Python applications with PredictionIO REST API services.
 """
 
 
-__version__ = "0.8.3"
+__version__ = "0.9.2"
 
 # import deprecated libraries.
 from predictionio.obsolete import Client
@@ -489,7 +489,7 @@ class EngineClient(BaseClient):
     return self.asend_query(data).get_response()
 
 class FileExporter(object):
-  """File exporter to export events to JSON file for batch import
+  """File exporter to write events to JSON file for batch import
 
   :param file_name: the destination file name
   """
@@ -502,7 +502,11 @@ class FileExporter(object):
   def create_event(self, event, entity_type, entity_id,
       target_entity_type=None, target_entity_id=None, properties=None,
       event_time=None):
-    """write event to the file"""
+    """Create an event and write to the file.
+
+    (please refer to EventClient's create_event())
+
+    """
     data = {
         "event": event,
         "entityType": entity_type,

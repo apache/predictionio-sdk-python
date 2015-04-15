@@ -59,9 +59,10 @@ predictionio.AsyncRequest Class
 predictionio.FileExporter Class
 -------------------------------
 
+.. versionadded:: 0.9.2
 .. autoclass:: FileExporter
    :members:
-   
+
 
 predictionio SDK Usage Notes
 -------------------------
@@ -89,8 +90,7 @@ This allows you to do other work between these two steps.
    In some cases you may not care whether the request is successful for performance or application-specific reasons, then you can simply skip step 2.
 
 .. note::
-   If you do care about the request status or need to get the return data, then at a later time you will need to call :meth:`~Client.aresp` with the AsyncRequest object returned in step 1.
-   Please refer to the documentation of :ref:`asynchronous request methods <async-methods-label>` for more details.
+   If you do care about the request status or need to get the return data, then at a later time you will need to call :meth:`~AsyncRequest.get_response` with the AsyncRequest object returned in step 1.
 
 For example, the following code first generates an asynchronous request to
 retrieve recommendations, then get the result at later time::
@@ -134,6 +134,8 @@ Alternatively, you can use blocking requests to import large amount of data, but
 
 Batch Import Data with FileExporter and "pio import"
 ^^^^^^^^^^^^^^^^^^^^^^^
+
+.. versionadded:: 0.9.2
 
 You can use FileExporter to create events and write to a JSON file which can
 be used by "pio import". Pleas see `Importing Data in Batch <http://docs.prediction.io/datacollection/batchimport/>`_ for more details.
