@@ -5,7 +5,7 @@ Python applications with PredictionIO REST API services.
 """
 
 
-__version__ = "0.8.3"
+__version__ = "0.9.2"
 
 # import deprecated libraries.
 from predictionio.obsolete import Client
@@ -18,6 +18,13 @@ except ImportError:
   # pylint: disable=F0401
   # http is a Python3 module, replacing httplib
   from http import client as httplib
+
+try:
+  from urllib import urlencode
+except ImportError:
+  # pylint: disable=F0401,E0611
+  from urllib.parse import urlencode
+
 import json
 import urllib
 
@@ -165,11 +172,12 @@ class EventClient(BaseClient):
   :param timeout: timeout for HTTP connection attempts and requests in
     seconds (optional).
     Default value is 5.
+  :param channel: channel name (optional)
   """
 
-  def __init__(self, access_key, 
+  def __init__(self, access_key,
       url="http://localhost:7070",
-      threads=1, qsize=0, timeout=5):
+      threads=1, qsize=0, timeout=5, channel=None):
     assert type(access_key) is str, ("access_key must be string. "
         "Notice that app_id has been deprecated in Prediction.IO 0.8.2. "
         "Please use access_key instead.")
@@ -183,6 +191,7 @@ class EventClient(BaseClient):
           "you may use an earlier version of this sdk.")
 
     self.access_key = access_key
+    self.channel = channel
 
   def acreate_event(self, event, entity_type, entity_id,
       target_entity_type=None, target_entity_id=None, properties=None,
@@ -201,7 +210,7 @@ class EventClient(BaseClient):
     :param target_entity_id: target entity id. type str.
     :param properties: a custom dict associated with an event. type dict.
     :param event_time: the time of the event. type datetime, must contain
-      timezone info. 
+      timezone info.
 
     :returns:
       AsyncRequest object. You can call the get_response() method using this
@@ -227,8 +236,16 @@ class EventClient(BaseClient):
     # need to skip the last three digits.
     et_str = et.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + et.strftime("%z")
     data["eventTime"] = et_str
-    
-    path = "/events.json?accessKey=%s" % (self.access_key, )
+
+    qparam = {
+        "accessKey" : self.access_key
+        }
+
+    if self.channel is not None:
+      qparam["channel"] = self.channel
+
+    path = "/events.json?%s" % (urlencode(qparam), )
+
     request = AsyncRequest("POST", path, **data)
     request.set_rfunc(self._acreate_resp)
     self._connection.make_request(request)
@@ -239,7 +256,7 @@ class EventClient(BaseClient):
       event_time=None):
     """Synchronously (blocking) create an event."""
     return self.acreate_event(event, entity_type, entity_id,
-        target_entity_type, target_entity_id, properties, 
+        target_entity_type, target_entity_id, properties,
         event_time).get_response()
 
   def aget_event(self, event_id):
@@ -249,11 +266,18 @@ class EventClient(BaseClient):
       event.
 
     :returns:
-      AsyncRequest object. 
+      AsyncRequest object.
     """
+    qparam = {
+        "accessKey" : self.access_key
+        }
+
+    if self.channel is not None:
+      qparam["channel"] = self.channel
+
     enc_event_id = urllib.quote(event_id, "") # replace special char with %xx
-    path = "/events/%s.json" % enc_event_id
-    request = AsyncRequest("GET", path, accessKey=self.access_key)
+    path = "/events/%s.json" % (enc_event_id, )
+    request = AsyncRequest("GET", path, **qparam)
     request.set_rfunc(self._aget_resp)
     self._connection.make_request(request)
     return request
@@ -269,11 +293,18 @@ class EventClient(BaseClient):
       event.
 
     :returns:
-      AsyncRequest object. 
+      AsyncRequest object.
     """
+    qparam = {
+        "accessKey" : self.access_key
+        }
+
+    if self.channel is not None:
+      qparam["channel"] = self.channel
+
     enc_event_id = urllib.quote(event_id, "") # replace special char with %xx
     path = "/events/%s.json" % (enc_event_id, )
-    request = AsyncRequest("DELETE", path, accessKey=self.access_key)
+    request = AsyncRequest("DELETE", path, **qparam)
     request.set_rfunc(self._adelete_resp)
     self._connection.make_request(request)
     return request
@@ -286,7 +317,7 @@ class EventClient(BaseClient):
 
   def aset_user(self, uid, properties={}, event_time=None):
     """Set properties of a user.
-   
+
     Wrapper of acreate_event function, setting event to "$set" and entity_type
     to "user".
     """
@@ -304,7 +335,7 @@ class EventClient(BaseClient):
 
   def aunset_user(self, uid, properties, event_time=None):
     """Unset properties of an user.
-   
+
     Wrapper of acreate_event function, setting event to "$unset" and entity_type
     to "user".
     """
@@ -323,7 +354,7 @@ class EventClient(BaseClient):
 
   def adelete_user(self, uid, event_time=None):
     """Delete a user.
-   
+
     Wrapper of acreate_event function, setting event to "$delete" and entity_type
     to "user".
     """
@@ -339,7 +370,7 @@ class EventClient(BaseClient):
 
   def aset_item(self, iid, properties={}, event_time=None):
     """Set properties of an item.
-   
+
     Wrapper of acreate_event function, setting event to "$set" and entity_type
     to "item".
     """
@@ -356,7 +387,7 @@ class EventClient(BaseClient):
 
   def aunset_item(self, iid, properties={}, event_time=None):
     """Unset properties of an item.
-   
+
     Wrapper of acreate_event function, setting event to "$unset" and entity_type
     to "item".
     """
@@ -373,7 +404,7 @@ class EventClient(BaseClient):
 
   def adelete_item(self, iid, event_time=None):
     """Delete an item.
-   
+
     Wrapper of acreate_event function, setting event to "$delete" and entity_type
     to "item".
     """
@@ -413,7 +444,7 @@ class EventClient(BaseClient):
 class EngineClient(BaseClient):
   """Client for extracting prediction results from an PredictionIO Engine
   Instance.
-  
+
   :param url: the url of the PredictionIO Engine Instance.
   :param threads: number of threads to handle PredictionIO API requests.
           Must be >= 1.
@@ -424,7 +455,7 @@ class EngineClient(BaseClient):
   :param timeout: timeout for HTTP connection attempts and requests in
     seconds (optional).
     Default value is 5.
-  
+
   """
   def __init__(self, url="http://localhost:8000", threads=1,
       qsize=0, timeout=5):
@@ -435,7 +466,7 @@ class EngineClient(BaseClient):
     query.
 
     :param data: the query: It is coverted to an json object using json.dumps
-      method. type dict. 
+      method. type dict.
 
     :returns:
       AsyncRequest object. You can call the get_response() method using this
@@ -449,10 +480,60 @@ class EngineClient(BaseClient):
 
   def send_query(self, data):
     """Synchronously send a request.
-    
+
     :param data: the query: It is coverted to an json object using json.dumps
-      method. type dict. 
+      method. type dict.
 
     :returns: the prediction.
     """
     return self.asend_query(data).get_response()
+
+class FileExporter(object):
+  """File exporter to write events to JSON file for batch import
+
+  :param file_name: the destination file name
+  """
+  def __init__(self, file_name):
+    """Constructor of Exporter.
+
+    """
+    self._file = open(file_name, 'w')
+
+  def create_event(self, event, entity_type, entity_id,
+      target_entity_type=None, target_entity_id=None, properties=None,
+      event_time=None):
+    """Create an event and write to the file.
+
+    (please refer to EventClient's create_event())
+
+    """
+    data = {
+        "event": event,
+        "entityType": entity_type,
+        "entityId": entity_id,
+        }
+
+    if target_entity_type is not None:
+      data["targetEntityType"] = target_entity_type
+
+    if target_entity_id is not None:
+      data["targetEntityId"] = target_entity_id
+
+    if properties is not None:
+      data["properties"] = properties
+
+    et = event_time_validation(event_time)
+    # EventServer uses milliseconds, but python datetime class uses micro. Hence
+    # need to skip the last three digits.
+    et_str = et.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + et.strftime("%z")
+    data["eventTime"] = et_str
+
+    j = json.dumps(data)
+    self._file.write(j+"\n")
+
+  def close(self):
+    """Close the FileExporter
+
+    Call this method when you finish writing all events to JSON file
+    """
+    self._file.close()

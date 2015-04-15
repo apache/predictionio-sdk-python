@@ -98,7 +98,7 @@ print(client.unset_user("foo", properties=foo_properties))
 print("Delete user")
 print(client.delete_user("foo"))
 
-# The SDK also support specifying the eventTime. It is useful for importing 
+# The SDK also support specifying the eventTime. It is useful for importing
 # events happened in the past.
 foo_time = datetime(2014, 8, 31, 4, 56, tzinfo=pytz.timezone('US/Pacific'))
 print("Create user at " + str(foo_time))

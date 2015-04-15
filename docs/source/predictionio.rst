@@ -3,15 +3,18 @@ predictionio Package Documentation
 
 .. automodule:: predictionio
 
-The SDK comprises of two clients: 
+The SDK comprises of two clients:
 
-1. EventClient, it is for importing data into the PredictionIO platform. 
+1. EventClient, it is for importing data into the PredictionIO platform.
 2. EngineClient, it is for querying PredictionIO Engine Instance, submit query
    and extract prediction results.
 
-Please read `PredictionIO Quick Start
-<http://docs.prediction.io/0.8.3/recommendation/quickstart.html>`_ for
-detailed explanation.
+The SDK also provides a FileExporter for you to write events to a JSON file
+in the same way as EventClient. The JSON file can be used by "pio import"
+for batch data import.
+
+Please read `PredictionIO Event API <http://docs.prediction.io/datacollection/eventapi/>`_ for explanation of
+how SDK can be used to import events.
 
 predictionio.EventClient Class
 ------------------------------
@@ -38,7 +41,7 @@ predictionio.EventClient Class
     handling concurrent requests (although setting "threads" to 1 will still
     work). The optimal setting depends on your system and application
     requirement.
-   
+
 
 predictionio.EngineClient Class
 ------------------------------
@@ -46,11 +49,20 @@ predictionio.EngineClient Class
 .. autoclass:: EngineClient
    :members:
 
+
 predictionio.AsyncRequest Class
 ------------------------------
 
 .. autoclass:: AsyncRequest
    :members:
+
+predictionio.FileExporter Class
+-------------------------------
+
+.. versionadded:: 0.9.2
+.. autoclass:: FileExporter
+   :members:
+
 
 predictionio SDK Usage Notes
 -------------------------
@@ -78,8 +90,7 @@ This allows you to do other work between these two steps.
    In some cases you may not care whether the request is successful for performance or application-specific reasons, then you can simply skip step 2.
 
 .. note::
-   If you do care about the request status or need to get the return data, then at a later time you will need to call :meth:`~Client.aresp` with the AsyncRequest object returned in step 1.
-   Please refer to the documentation of :ref:`asynchronous request methods <async-methods-label>` for more details.
+   If you do care about the request status or need to get the return data, then at a later time you will need to call :meth:`~AsyncRequest.get_response` with the AsyncRequest object returned in step 1.
 
 For example, the following code first generates an asynchronous request to
 retrieve recommendations, then get the result at later time::
@@ -94,7 +105,7 @@ retrieve recommendations, then get the result at later time::
     >>>    <log the error>
 
 
-Batch Import Data
+Batch Import Data with EventClient
 ^^^^^^^^^^^^^^^^^^^^^
 
 When you import large amount of data at once, you may also use asynchronous
@@ -121,4 +132,12 @@ Alternatively, you can use blocking requests to import large amount of data, but
   >>>   except:
   >>>      <log the error>
 
+Batch Import Data with FileExporter and "pio import"
+^^^^^^^^^^^^^^^^^^^^^^^
 
+.. versionadded:: 0.9.2
+
+You can use FileExporter to create events and write to a JSON file which can
+be used by "pio import". Pleas see `Importing Data in Batch <http://docs.prediction.io/datacollection/batchimport/>`_ for more details.
+
+Note that this method is much faster than batch import with EventClient.
