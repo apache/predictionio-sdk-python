@@ -286,6 +286,58 @@ class EventClient(BaseClient):
     """Synchronouly get an event from Event Server."""
     return self.aget_event(event_id).get_response()
 
+  def aget_events(self, startTime=None, untilTime=None, entityType=None, entityId=None, limit=None, reversed=False):
+    """Asynchronouly get events from Event Server.
+
+    :param startTime: time in ISO8601 format. Return events with eventTime >= startTime.
+    :param untilTime: time in ISO8601 format. Return events with eventTime < untilTime.
+    :param entityId: String. The entityId. Return events for this entityId only.
+    :param limit: Integer. The number of record events returned. Default is 20. -1 to get all.
+    :param reversed: Boolean. Must be used with both entityType and entityId specified,
+      returns events in reversed chronological order. Default is false.
+
+    :returns:
+      AsyncRequest object.
+    """
+    qparam = {
+        "accessKey" : self.access_key,
+        "reversed": reversed
+      }
+
+    if startTime is not None:
+      qparam["startTime"] = startTime
+
+    if untilTime is not None:
+      qparam["untilTime"] = untilTime
+
+    if entityType is not None:
+      qparam["entityType"] = entityType
+
+    if entityId is not None:
+      qparam["entityId"] = entityId
+
+    if limit is not None:
+      qparam["limit"] = limit
+
+    if self.channel is not None:
+      qparam["channel"] = self.channel
+    path = "/events.json"
+    request = AsyncRequest("GET", path, **qparam)
+    request.set_rfunc(self._aget_resp)
+    self._connection.make_request(request)
+    return request
+
+  def get_events(self, startTime=None, untilTime=None, entityType=None, entityId=None, limit=None, reversed=False):
+    """Synchronouly get event from Event Server."""
+    return self.aget_events(
+      startTime=startTime,
+      untilTime=untilTime,
+      entityType=entityType,
+      entityId=entityId,
+      limit=limit,
+      reversed=reversed
+    ).get_response()
+
   def adelete_event(self, event_id):
     """Asynchronouly delete an event from Event Server.
 
