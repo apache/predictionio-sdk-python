@@ -287,7 +287,7 @@ class EventClient(BaseClient):
     return self.aget_event(event_id).get_response()
 
   def aget_events(self, startTime=None, untilTime=None, entityType=None, entityId=None, limit=None, reversed=False):
-    """Asynchronouly get events from Event Server.
+    """Asynchronouly get events from Event Server. (Getting events through the Event Server API is used for debugging and not recommended for production)
 
     :param startTime: time in ISO8601 format. Return events with eventTime >= startTime.
     :param untilTime: time in ISO8601 format. Return events with eventTime < untilTime.
@@ -328,7 +328,7 @@ class EventClient(BaseClient):
     return request
 
   def get_events(self, startTime=None, untilTime=None, entityType=None, entityId=None, limit=None, reversed=False):
-    """Synchronouly get event from Event Server."""
+    """Synchronouly get event from Event Server. (Getting events through the Event Server API is used for debugging and not recommended for production)"""
     return self.aget_events(
       startTime=startTime,
       untilTime=untilTime,
