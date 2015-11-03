@@ -1,11 +1,10 @@
-"""PredictoinIO Python SDK
-
-The PredictoinIO Python SDK provides easy-to-use functions for integrating
+"""PredictionIO Python SDK
+The PredictionIO Python SDK provides easy-to-use functions for integrating
 Python applications with PredictionIO REST API services.
 """
 
 
-__version__ = "0.9.2"
+__version__ = "0.9.6"
 
 # import deprecated libraries.
 from predictionio.obsolete import Client, InvalidArgumentError
@@ -64,7 +63,6 @@ def event_time_validation(t):
 class BaseClient(object):
   def __init__(self, url, threads=1, qsize=0, timeout=5):
     """Constructor of Client object.
-
     """
     self.threads = threads
     self.url = url
@@ -90,7 +88,6 @@ class BaseClient(object):
 
   def close(self):
     """Close this client and the connection.
-
     Call this method when you want to completely terminate the connection
     with PredictionIO.
     It will wait for all pending requests to finish.
@@ -99,7 +96,6 @@ class BaseClient(object):
 
   def pending_requests(self):
     """Return the number of pending requests.
-
     :returns:
       The number of pending requests of this client.
     """
@@ -107,10 +103,8 @@ class BaseClient(object):
 
   def get_status(self):
     """Get the status of the PredictionIO API Server
-
     :returns:
       status message.
-
     :raises:
       ServerStatusError.
     """
@@ -157,10 +151,8 @@ class BaseClient(object):
 
 class EventClient(BaseClient):
   """Client for importing data into PredictionIO Event Server.
-
   Notice that app_id has been deprecated as of 0.8.2. Please use access_token
   instead.
-
   :param access_key: the access key for your application.
   :param url: the url of PredictionIO Event Server.
   :param threads: number of threads to handle PredictionIO API requests.
@@ -197,7 +189,6 @@ class EventClient(BaseClient):
       target_entity_type=None, target_entity_id=None, properties=None,
       event_time=None):
     """Asynchronously create an event.
-
     :param event: event name. type str.
     :param entity_type: entity type. It is the namespace of the entityId and
       analogous to the table name of a relational database. The entityId must be
@@ -211,7 +202,6 @@ class EventClient(BaseClient):
     :param properties: a custom dict associated with an event. type dict.
     :param event_time: the time of the event. type datetime, must contain
       timezone info.
-
     :returns:
       AsyncRequest object. You can call the get_response() method using this
       object to get the final resuls or status of this asynchronous request.
@@ -261,10 +251,8 @@ class EventClient(BaseClient):
 
   def aget_event(self, event_id):
     """Asynchronouly get an event from Event Server.
-
     :param event_id: event id returned by the EventServer when creating the
       event.
-
     :returns:
       AsyncRequest object.
     """
@@ -288,14 +276,12 @@ class EventClient(BaseClient):
 
   def aget_events(self, startTime=None, untilTime=None, entityType=None, entityId=None, limit=None, reversed=False):
     """Asynchronouly get events from Event Server. (Getting events through the Event Server API is used for debugging and not recommended for production)
-
     :param startTime: time in ISO8601 format. Return events with eventTime >= startTime.
     :param untilTime: time in ISO8601 format. Return events with eventTime < untilTime.
     :param entityId: String. The entityId. Return events for this entityId only.
     :param limit: Integer. The number of record events returned. Default is 20. -1 to get all.
     :param reversed: Boolean. Must be used with both entityType and entityId specified,
       returns events in reversed chronological order. Default is false.
-
     :returns:
       AsyncRequest object.
     """
@@ -340,10 +326,8 @@ class EventClient(BaseClient):
 
   def adelete_event(self, event_id):
     """Asynchronouly delete an event from Event Server.
-
     :param event_id: event id returned by the EventServer when creating the
       event.
-
     :returns:
       AsyncRequest object.
     """
@@ -369,7 +353,6 @@ class EventClient(BaseClient):
 
   def aset_user(self, uid, properties={}, event_time=None):
     """Set properties of a user.
-
     Wrapper of acreate_event function, setting event to "$set" and entity_type
     to "user".
     """
@@ -387,7 +370,6 @@ class EventClient(BaseClient):
 
   def aunset_user(self, uid, properties, event_time=None):
     """Unset properties of an user.
-
     Wrapper of acreate_event function, setting event to "$unset" and entity_type
     to "user".
     """
@@ -406,7 +388,6 @@ class EventClient(BaseClient):
 
   def adelete_user(self, uid, event_time=None):
     """Delete a user.
-
     Wrapper of acreate_event function, setting event to "$delete" and entity_type
     to "user".
     """
@@ -422,7 +403,6 @@ class EventClient(BaseClient):
 
   def aset_item(self, iid, properties={}, event_time=None):
     """Set properties of an item.
-
     Wrapper of acreate_event function, setting event to "$set" and entity_type
     to "item".
     """
@@ -439,7 +419,6 @@ class EventClient(BaseClient):
 
   def aunset_item(self, iid, properties={}, event_time=None):
     """Unset properties of an item.
-
     Wrapper of acreate_event function, setting event to "$unset" and entity_type
     to "item".
     """
@@ -456,7 +435,6 @@ class EventClient(BaseClient):
 
   def adelete_item(self, iid, event_time=None):
     """Delete an item.
-
     Wrapper of acreate_event function, setting event to "$delete" and entity_type
     to "item".
     """
@@ -473,7 +451,6 @@ class EventClient(BaseClient):
   def arecord_user_action_on_item(self, action, uid, iid, properties={},
       event_time=None):
     """Create a user-to-item action.
-
     Wrapper of acreate_event function, setting entity_type to "user" and
     target_entity_type to "item".
     """
@@ -496,7 +473,6 @@ class EventClient(BaseClient):
 class EngineClient(BaseClient):
   """Client for extracting prediction results from an PredictionIO Engine
   Instance.
-
   :param url: the url of the PredictionIO Engine Instance.
   :param threads: number of threads to handle PredictionIO API requests.
           Must be >= 1.
@@ -507,7 +483,6 @@ class EngineClient(BaseClient):
   :param timeout: timeout for HTTP connection attempts and requests in
     seconds (optional).
     Default value is 5.
-
   """
   def __init__(self, url="http://localhost:8000", threads=1,
       qsize=0, timeout=5):
@@ -516,10 +491,8 @@ class EngineClient(BaseClient):
   def asend_query(self, data):
     """Asynchronously send a request to the engine instance with data as the
     query.
-
     :param data: the query: It is coverted to an json object using json.dumps
       method. type dict.
-
     :returns:
       AsyncRequest object. You can call the get_response() method using this
       object to get the final resuls or status of this asynchronous request.
@@ -532,22 +505,18 @@ class EngineClient(BaseClient):
 
   def send_query(self, data):
     """Synchronously send a request.
-
     :param data: the query: It is coverted to an json object using json.dumps
       method. type dict.
-
     :returns: the prediction.
     """
     return self.asend_query(data).get_response()
 
 class FileExporter(object):
   """File exporter to write events to JSON file for batch import
-
   :param file_name: the destination file name
   """
   def __init__(self, file_name):
     """Constructor of Exporter.
-
     """
     self._file = open(file_name, 'w')
 
@@ -555,9 +524,7 @@ class FileExporter(object):
       target_entity_type=None, target_entity_id=None, properties=None,
       event_time=None):
     """Create an event and write to the file.
-
     (please refer to EventClient's create_event())
-
     """
     data = {
         "event": event,
@@ -585,7 +552,6 @@ class FileExporter(object):
 
   def close(self):
     """Close the FileExporter
-
     Call this method when you finish writing all events to JSON file
     """
     self._file.close()
