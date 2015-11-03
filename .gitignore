@@ -1,3 +1,7 @@
+*.egg-info
+.idea
+.tox
+.coverage
 *.pyc
 .project
 .pydevproject

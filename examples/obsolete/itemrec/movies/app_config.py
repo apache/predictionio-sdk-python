@@ -1,2 +1,0 @@
-APP_KEY = 'uJKTKyUAFNZYQQO5yxkdrSo3XIlaf9LXejI63CWE0mtZVEYF89hyVtOwpMKfXXXX'
-API_URL = 'http://localhost:8000'
