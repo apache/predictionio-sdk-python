@@ -6,9 +6,6 @@ Python applications with PredictionIO REST API services.
 
 __version__ = "0.9.6"
 
-# import deprecated libraries.
-from predictionio.obsolete import Client, InvalidArgumentError
-
 # import packages
 import re
 try:
