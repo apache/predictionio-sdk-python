@@ -28,14 +28,12 @@ except ImportError:
   from urllib.parse import quote
 
 import json
-import urllib
 
 from datetime import datetime
 import pytz
 
 from predictionio.connection import Connection
 from predictionio.connection import AsyncRequest
-from predictionio.connection import AsyncResponse
 from predictionio.connection import PredictionIOAPIError
 
 

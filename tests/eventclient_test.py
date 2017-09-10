@@ -5,6 +5,7 @@ import unittest
 from datetime import datetime
 from predictionio import EventClient
 from predictionio import NotFoundError
+from predictionio import InvalidArgumentError
 
 app_name ='EventClientApp'
 access_key = 'EVENT_CLIENT_TEST'
@@ -244,6 +245,13 @@ class EventClientTest(unittest.TestCase):
             delete_response = client.delete_event(first_event_id)
             self.fail()
         except NotFoundError as ex:
+            print("The expected error: {0}".format(ex))
+
+    def test_invalidurl(self):
+        try:
+            EventClient(access_key=access_key, url="invalid")
+            self.fail()
+        except InvalidArgumentError as ex:
             print("The expected error: {0}".format(ex))
 
 
