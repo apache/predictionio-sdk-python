@@ -183,8 +183,8 @@ class EventClient(BaseClient):
 
     if len(access_key) <= 8:
       raise DeprecationWarning(
-          "It seems like you are specifying an app_id. It is deprecated in "
-          "Prediction.IO 0.8.2. Please use access_key instead. Or, "
+          "The entered access key is very short, it seems like you are specifying an app_id."
+          "This is deprecated in Prediction.IO 0.8.2. Please use (a longer) access_key instead. Or, "
           "you may use an earlier version of this sdk.")
 
     self.access_key = access_key
