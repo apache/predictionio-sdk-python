@@ -1,0 +1,34 @@
+sudo: required
+
+language: python
+
+jdk:
+  - oraclejdk8
+
+python:
+  - 2.7
+  - 3.4
+  - 3.5
+  - 3.6
+
+cache:
+  directories:
+    - $HOME/.ivy2/cache
+    - $HOME/.sbt/boot
+    - $HOME/.sbt/launchers
+
+install:
+  - pip install tox tox-travis
+  - pip install coverage coveralls
+
+before_script:
+  - java -version
+  - ./tests/before_script.travis.sh
+  - export PATH=$PATH:$PWD/predictionio-setup/predictionio/bin
+
+script:
+  - pio status
+  - tox -r
+
+after_script:
+  - ./tests/after_script.travis.sh

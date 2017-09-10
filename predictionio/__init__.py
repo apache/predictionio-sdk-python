@@ -21,6 +21,12 @@ except ImportError:
   # pylint: disable=F0401,E0611
   from urllib.parse import urlencode
 
+try:
+  from urllib import quote
+except ImportError:
+  # pylint: disable=F0401,E0611
+  from urllib.parse import quote
+
 import json
 import urllib
 
@@ -260,7 +266,7 @@ class EventClient(BaseClient):
     if self.channel is not None:
       qparam["channel"] = self.channel
 
-    enc_event_id = urllib.quote(event_id, "") # replace special char with %xx
+    enc_event_id = quote(event_id, "") # replace special char with %xx
     path = "/events/%s.json" % (enc_event_id, )
     request = AsyncRequest("GET", path, **qparam)
     request.set_rfunc(self._aget_resp)
@@ -335,7 +341,7 @@ class EventClient(BaseClient):
     if self.channel is not None:
       qparam["channel"] = self.channel
 
-    enc_event_id = urllib.quote(event_id, "") # replace special char with %xx
+    enc_event_id = quote(event_id, "") # replace special char with %xx
     path = "/events/%s.json" % (enc_event_id, )
     request = AsyncRequest("DELETE", path, **qparam)
     request.set_rfunc(self._adelete_resp)
@@ -519,7 +525,7 @@ class FileExporter(object):
 
   def create_event(self, event, entity_type, entity_id,
       target_entity_type=None, target_entity_id=None, properties=None,
-      event_time=None):
+      event_time=None, ensure_ascii=True):
     """Create an event and write to the file.
     (please refer to EventClient's create_event())
     """
@@ -544,7 +550,7 @@ class FileExporter(object):
     et_str = et.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + et.strftime("%z")
     data["eventTime"] = et_str
 
-    j = json.dumps(data)
+    j = json.dumps(data, ensure_ascii=ensure_ascii)
     self._file.write(j+"\n")
 
   def close(self):
