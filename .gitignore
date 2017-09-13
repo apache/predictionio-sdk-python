@@ -13,3 +13,4 @@ MANIFEST
 docs/build/
 tests_env/
 *.zip
+.DS_Store
