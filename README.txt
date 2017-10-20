@@ -48,7 +48,7 @@ To view the generated documentation, go to docs/build/html/index.html.
 SUPPORT
 =======
 
-http://predictionio.incubator.apache.org/support/
+http://predictionio.apache.org/support/
 
 
 Issue Tracker

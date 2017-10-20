@@ -4,7 +4,7 @@ Python applications with PredictionIO REST API services.
 """
 
 
-__version__ = "0.9.8"
+__version__ = "0.9.9"
 
 # import packages
 import re

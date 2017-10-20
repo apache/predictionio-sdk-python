@@ -4,7 +4,7 @@ except ImportError:
     from distutils.core import setup
 
 __author__ = "Apache PredictionIO"
-__email__ = "user@predictionio.incubator.apache.org"
+__email__ = "user@predictionio.apache.org"
 __copyright__ = "Copyright 2017 The Apache Software Foundation"
 __license__ = "Apache License, Version 2.0"
 
@@ -14,7 +14,7 @@ setup(
     author=__author__,
     author_email=__email__,
     packages=['predictionio'],
-    url='http://predictionio.incubator.apache.org/',
+    url='http://predictionio.apache.org/',
     license='LICENSE.txt',
     description='PredictionIO Python SDK',
     classifiers=[
@@ -44,7 +44,7 @@ setup(
                        - without worrying about scalability
 
                        Detailed documentation is available on our
-                       `documentation site <http://predictionio.incubator.apache.org/>`_.
+                       `documentation site <http://predictionio.apache.org/>`_.
 
                        This module provides convenient access of the
                        PredictionIO API to Python programmers so that they
