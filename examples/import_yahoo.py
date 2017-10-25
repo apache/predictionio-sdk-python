@@ -3,13 +3,14 @@ Import historical stock data from yahoo finance.
 """
 
 from datetime import datetime
+import sys
+
+import pytz
+
 from pandas.io import data as pdata
-import argparse
 import numpy
 import predictionio
-import pytz
-import sys
-import time
+
 
 EPOCH = datetime(1970, 1, 1, tzinfo=pytz.utc)
 
@@ -63,151 +64,151 @@ SP500_LIST = [
     "WU", "WY", "WYN", "WYNN", "X", "XEL", "XL", "XLNX", "XOM", "XRAY", "XRX",
     "XYL", "YHOO", "YUM", "ZION", "ZMH", "ZTS"]
 
-ETF_LIST = ["QQQ", "SPY", "XLY", "XLP", "XLE", "XLF", "XLV", 
-    "XLI", "XLB", "XLK", "XLU"]
+ETF_LIST = ["QQQ", "SPY", "XLY", "XLP", "XLE", "XLF", "XLV",
+            "XLI", "XLB", "XLK", "XLU"]
 
 
 def since_epoch(dt):
-  return (dt - EPOCH).total_seconds()
+    return (dt - EPOCH).total_seconds()
 
 
 def import_data(client, access_key, ticker, start_time, end_time, event_time):
-  print "Importing:", ticker, start_time, end_time
+    print("Importing:", ticker, start_time, end_time)
 
-  try:
-    df = pdata.DataReader(ticker, 'yahoo', start_time, end_time)
-    print "Extracted:", df.index[0], df.index[-1]
-  except IOError, ex:
-    print ex
-    print "Data not exist. Returning"
-    return
+    try:
+        df = pdata.DataReader(ticker, 'yahoo', start_time, end_time)
+        print("Extracted:", df.index[0], df.index[-1])
+    except IOError as ex:
+        print(ex)
+        print("Data not exist. Returning")
+        return
 
-  # assume we only extract US data
-  eastern = pytz.timezone('US/Eastern')
+    # assume we only extract US data
+    eastern = pytz.timezone('US/Eastern')
 
-  columns = [
-      ('Open', 'open'),
-      ('High', 'high'),
-      ('Low', 'low'),
-      ('Close', 'close'),
-      ('Volume', 'volume'),
-      ('Adj Close', 'adjclose')]
+    columns = [
+        ('Open', 'open'),
+        ('High', 'high'),
+        ('Low', 'low'),
+        ('Close', 'close'),
+        ('Volume', 'volume'),
+        ('Adj Close', 'adjclose')]
 
-  yahoo_data = dict()
-  yahoo_data['ticker'] = ticker
-  yahoo_data['t'] = [
-      # hour=16 to indicate market close time
-      since_epoch(eastern.localize(date_.to_pydatetime().replace(hour=16)))
-      for date_ in df.index]
+    yahoo_data = dict()
+    yahoo_data['ticker'] = ticker
+    yahoo_data['t'] = [
+        # hour=16 to indicate market close time
+        since_epoch(eastern.localize(date_.to_pydatetime().replace(hour=16)))
+        for date_ in df.index]
 
-  for column in columns:
-    yahoo_data[column[1]] = map(numpy.asscalar, df[column[0]].values)
+    for column in columns:
+        yahoo_data[column[1]] = map(numpy.asscalar, df[column[0]].values)
 
-  properties = {'yahoo': yahoo_data}
+    properties = {'yahoo': yahoo_data}
 
-  response = client.create_event(
-      event='$set',
-      entity_type='yahoo',
-      entity_id=ticker,
-      properties=properties,
-      event_time=event_time.replace(tzinfo=pytz.utc))
-      
-  print(response)
+    response = client.create_event(
+        event='$set',
+        entity_type='yahoo',
+        entity_id=ticker,
+        properties=properties,
+        event_time=event_time.replace(tzinfo=pytz.utc))
+
+    print(response)
 
 
 def import_all(access_key):
-  """This method import all SP500 stocks and some SPDR ETFs."""
-  time_slices = [
-      (datetime(1999, 1, 1), datetime(2004, 1, 1), datetime(2004, 1, 2)),
-      (datetime(2003, 12, 1), datetime(2009, 1, 1), datetime(2009, 1, 2)),
-      (datetime(2008, 12, 1), datetime(2014, 9, 1), datetime(2014, 9, 2)),
-      ]
+    """This method import all SP500 stocks and some SPDR ETFs."""
+    time_slices = [
+        (datetime(1999, 1, 1), datetime(2004, 1, 1), datetime(2004, 1, 2)),
+        (datetime(2003, 12, 1), datetime(2009, 1, 1), datetime(2009, 1, 2)),
+        (datetime(2008, 12, 1), datetime(2014, 9, 1), datetime(2014, 9, 2)),
+    ]
 
-  url = 'http://localhost:7070'
-  client = predictionio.EventClient(access_key=access_key, threads=1, url=url)
+    url = 'http://localhost:7070'
+    client = predictionio.EventClient(access_key=access_key, threads=1, url=url)
 
-  tickers = SP500_LIST + ETF_LIST 
+    tickers = SP500_LIST + ETF_LIST
 
-  for ticker in tickers:
-    for time_slice in time_slices:
-      import_data(client, access_key, ticker, 
-          time_slice[0], time_slice[1], time_slice[2])
+    for ticker in tickers:
+        for time_slice in time_slices:
+            import_data(client, access_key, ticker,
+                        time_slice[0], time_slice[1], time_slice[2])
 
 
 def import_data_with_gaps(access_key):
-  """This method import data with time gaps. 
-  
-  Data imported by this method is used by stock engine, it demonsrates how it
-  can handle time series data with gaps.
-  """ 
+    """This method import data with time gaps.
 
-  # time_slices is discontinuted
-  # startTime, endTime, eventDate
-  time_slices = [
-      (datetime(2013, 12, 1), datetime(2014, 2, 1), datetime(2014, 2, 2)),
-      (datetime(2014, 1, 1), datetime(2014, 1, 20), datetime(2014, 2, 10)),
-      (datetime(2014, 1, 10), datetime(2014, 2, 20), datetime(2014, 2, 28)),
-      (datetime(2014, 2, 10), datetime(2014, 3, 31), datetime(2014, 4, 2)),
-      (datetime(2014, 5, 1), datetime(2014, 6, 15), datetime(2014, 6, 20)),
-      (datetime(2014, 6, 1), datetime(2014, 7, 1), datetime(2014, 7, 15)),
-      ]
+    Data imported by this method is used by stock engine, it demonsrates how it
+    can handle time series data with gaps.
+    """
 
-  tickers = ['SPY', 'AAPL', 'IBM', 'MSFT']
- 
-  url = 'http://localhost:7070'
-  client = predictionio.EventClient(access_key=access_key, threads=1, url=url)
+    # time_slices is discontinuted
+    # startTime, endTime, eventDate
+    time_slices = [
+        (datetime(2013, 12, 1), datetime(2014, 2, 1), datetime(2014, 2, 2)),
+        (datetime(2014, 1, 1), datetime(2014, 1, 20), datetime(2014, 2, 10)),
+        (datetime(2014, 1, 10), datetime(2014, 2, 20), datetime(2014, 2, 28)),
+        (datetime(2014, 2, 10), datetime(2014, 3, 31), datetime(2014, 4, 2)),
+        (datetime(2014, 5, 1), datetime(2014, 6, 15), datetime(2014, 6, 20)),
+        (datetime(2014, 6, 1), datetime(2014, 7, 1), datetime(2014, 7, 15)),
+    ]
 
-  for ticker in tickers:
-    for time_slice in time_slices:
-      import_data(client, access_key, ticker, 
-          time_slice[0], time_slice[1], time_slice[2])
+    tickers = ['SPY', 'AAPL', 'IBM', 'MSFT']
 
-  # below are data with holes
-  time_slices = [
-      (datetime(2014, 1, 1), datetime(2014, 1, 20), datetime(2014, 2, 10)),
-      (datetime(2014, 2, 10), datetime(2014, 3, 31), datetime(2014, 4, 2)),
-      (datetime(2014, 6, 1), datetime(2014, 7, 1), datetime(2014, 7, 15)),
-      ]
+    url = 'http://localhost:7070'
+    client = predictionio.EventClient(access_key=access_key, threads=1, url=url)
 
-  tickers = ['AMZN']
-  for ticker in tickers:
-    for time_slice in time_slices:
-      import_data(client, access_key, ticker, 
-          time_slice[0], time_slice[1], time_slice[2])
+    for ticker in tickers:
+        for time_slice in time_slices:
+            import_data(client, access_key, ticker,
+                        time_slice[0], time_slice[1], time_slice[2])
 
-  time_slices = [
-      (datetime(2014, 1, 10), datetime(2014, 2, 20), datetime(2014, 2, 28)),
-      (datetime(2014, 2, 10), datetime(2014, 3, 31), datetime(2014, 4, 2)),
-      ]
-  tickers = ['FB']
-  for ticker in tickers:
-    for time_slice in time_slices:
-      import_data(client, access_key, ticker, 
-          time_slice[0], time_slice[1], time_slice[2])
+    # below are data with holes
+    time_slices = [
+        (datetime(2014, 1, 1), datetime(2014, 1, 20), datetime(2014, 2, 10)),
+        (datetime(2014, 2, 10), datetime(2014, 3, 31), datetime(2014, 4, 2)),
+        (datetime(2014, 6, 1), datetime(2014, 7, 1), datetime(2014, 7, 15)),
+    ]
+
+    tickers = ['AMZN']
+    for ticker in tickers:
+        for time_slice in time_slices:
+            import_data(client, access_key, ticker,
+                        time_slice[0], time_slice[1], time_slice[2])
+
+    time_slices = [
+        (datetime(2014, 1, 10), datetime(2014, 2, 20), datetime(2014, 2, 28)),
+        (datetime(2014, 2, 10), datetime(2014, 3, 31), datetime(2014, 4, 2)),
+    ]
+    tickers = ['FB']
+    for ticker in tickers:
+        for time_slice in time_slices:
+            import_data(client, access_key, ticker,
+                        time_slice[0], time_slice[1], time_slice[2])
 
 
 def import_one(access_key):
-  """Import TSLA.
-  
-  Import data with from 2014-01-01 until 2014-03-01. event_time specifies when
-  this data is extracted. 
-  """
-  start_time = datetime(2014, 1, 1)
-  end_time = datetime(2014, 3, 1)
-  event_time = datetime(2014, 9, 1)
-  ticker = 'TSLA'
- 
-  url = 'http://localhost:7070'
-  client = predictionio.EventClient(access_key=access_key, threads=1, url=url)
+    """Import TSLA.
 
-  import_data(client, access_key, ticker, start_time, end_time, event_time)
+    Import data with from 2014-01-01 until 2014-03-01. event_time specifies when
+    this data is extracted.
+    """
+    start_time = datetime(2014, 1, 1)
+    end_time = datetime(2014, 3, 1)
+    event_time = datetime(2014, 9, 1)
+    ticker = 'TSLA'
+
+    url = 'http://localhost:7070'
+    client = predictionio.EventClient(access_key=access_key, threads=1, url=url)
+
+    import_data(client, access_key, ticker, start_time, end_time, event_time)
 
 
 if __name__ == '__main__':
-  if len(sys.argv) < 2:
-    sys.exit("Usage: python -m examples.import_yahoo <access_key>")
+    if len(sys.argv) < 2:
+        sys.exit("Usage: python -m examples.import_yahoo <access_key>")
 
-  access_key = sys.argv[1]
-  import_all(access_key=access_key)
-  #import_data_with_gaps(access_key=access_key)
-  #import_one(access_key=access_key)
+    access_key = sys.argv[1]
+    import_all(access_key=access_key)
+    # import_data_with_gaps(access_key=access_key)
+    # import_one(access_key=access_key)

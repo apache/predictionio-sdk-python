@@ -48,16 +48,12 @@ To view the generated documentation, go to docs/build/html/index.html.
 SUPPORT
 =======
 
-
-Forum
------
-
-https://groups.google.com/group/predictionio-user
+http://predictionio.apache.org/support/
 
 
 Issue Tracker
 -------------
 
-https://predictionio.atlassian.net
+https://issues.apache.org/jira/projects/PIO
 
 If you are unsure whether a behavior is an issue, bringing it up in the forum is highly encouraged.

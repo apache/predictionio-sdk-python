@@ -1,3 +1,7 @@
+*.egg-info
+.idea
+.tox
+.coverage
 *.pyc
 .project
 .pydevproject
@@ -9,3 +13,4 @@ MANIFEST
 docs/build/
 tests_env/
 *.zip
+.DS_Store
